@@ -1,8 +1,8 @@
 // DragonOS Context Menu - Right-click desktop context menu
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from '../context';
-import { sounds } from '../sounds';
+import { useOS } from './context';
+import { sounds } from './sounds';
 
 interface MenuItem {
   label: string;

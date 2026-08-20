@@ -1,10 +1,10 @@
 // DragonOS Notepad App
 import { useState, useEffect, useRef } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import type { Note } from '../types';
 
 export default function Notepad() {
-  const [notes, setNotes] = load<Note[]>('notepad-notes', []);
+  const [notes, setNotes] = usePersist<Note[]>('notepad-notes', []);
   const [activeId, setActiveId] = useState<string>(notes[0]?.id || '');
   const [saved, setSaved] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -37,7 +37,7 @@ export default function Notepad() {
     if (activeId === id) setActiveId(remaining[0]?.id || '');
   };
 
-  useEffect(() => { save('notepad-notes', notes); }, [notes]);
+
 
   const words = activeNote ? activeNote.content.trim().split(/\s+/).filter(Boolean).length : 0;
   const chars = activeNote ? activeNote.content.length : 0;

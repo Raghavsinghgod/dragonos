@@ -1,6 +1,6 @@
 // DragonOS Habits App
 import { useState, useMemo } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 import type { Habit } from '../types';
 
@@ -25,7 +25,7 @@ function getStreak(completions: string[]): number {
 }
 
 export default function Habits() {
-  const [habits, setHabits] = load<Habit[]>('habits', []);
+  const [habits, setHabits] = usePersist<Habit[]>('habits', []);
   const [newName, setNewName] = useState('');
   const days = useMemo(() => last7Days(), []);
   const today = new Date().toISOString().split('T')[0];

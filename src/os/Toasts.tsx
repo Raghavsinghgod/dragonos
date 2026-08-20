@@ -1,6 +1,6 @@
 // DragonOS Toast Notifications
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from '../context';
+import { useOS } from './context';
 
 const typeColors: Record<string, string> = {
   info: 'border-l-[#3b82f6]',

@@ -1,12 +1,12 @@
 // DragonOS Quick Notes App
 import { useState, useEffect } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 
 interface QNote { id: string; text: string; time: number; }
 
 export default function QuickNotes() {
-  const [notes, setNotes] = load<QNote[]>('quick-notes', []);
+  const [notes, setNotes] = usePersist<QNote[]>('quick-notes', []);
   const [input, setInput] = useState('');
 
   const addNote = () => {

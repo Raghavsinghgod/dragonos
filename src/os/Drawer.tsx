@@ -1,9 +1,9 @@
 // DragonOS Drawer - Right-edge slide-in panel
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from '../context';
-import { sounds } from '../sounds';
-import { save, load } from '../persist';
+import { useOS } from './context';
+import { sounds } from './sounds';
+import { save, load } from './persist';
 
 export default function Drawer() {
   const { state, dispatch, openApp, addToast } = useOS();

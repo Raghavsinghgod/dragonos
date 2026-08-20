@@ -113,7 +113,7 @@ export default function Calculator() {
   );
 }
 
-function calc(a: number, b: number, op: number): number {
+function calc(a: number, b: number, op: string): number {
   switch (op) {
     case '+': return a + b;
     case '-': return a - b;

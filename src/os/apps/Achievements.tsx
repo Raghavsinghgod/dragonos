@@ -20,7 +20,7 @@ function checkUnlocked(id: string): boolean {
   switch (id) {
     case 'first-note': return (load<any[]>('notepad-notes', []).length > 0);
     case 'tasks-10': return (load<any[]>('todos', []).filter(t => t.done).length >= 10);
-    case 'goal-done': return load<any[]>('goals', []).some(g => g.milestones.length > 0 && g.milestones.every(m => m.done));
+    case 'goal-done': return load<any[]>('goals', []).some((g: any) => g.milestones.length > 0 && g.milestones.every((m: any) => m.done));
     case 'first-journal': return load<any[]>('journal-entries', []).some(e => e.content);
     case 'expense-track': return load<any[]>('expenses-list', []).length >= 10;
     case 'pomodoro-5': return load<number>('pomodoro-sessions', 0) >= 5;

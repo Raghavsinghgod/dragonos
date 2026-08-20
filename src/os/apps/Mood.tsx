@@ -1,6 +1,6 @@
 // DragonOS Mood App
 import { useState, useMemo } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 import type { MoodEntry } from '../types';
 
@@ -8,7 +8,7 @@ const moods = ['😫', '😟', '😐', '😊', '🤩'];
 const moodColors: Record<string, string> = { '😫': '#ef4444', '😟': '#f59e0b', '😐': '#6b7280', '😊': '#3b82f6', '🤩': '#22c55e' };
 
 export default function Mood() {
-  const [entries, setEntries] = load<MoodEntry[]>('mood-entries', []);
+  const [entries, setEntries] = usePersist<MoodEntry[]>('mood-entries', []);
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
   const todayMood = entries.find(e => e.date === today);

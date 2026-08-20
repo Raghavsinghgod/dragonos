@@ -1,13 +1,13 @@
 // DragonOS Goals App
 import { useState, useEffect } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 import type { Goal } from '../types';
 
 const emojis = ['🎯', '🏆', '💪', '📚', '🎨', '🏃', '💰', '🧘', '🎸', '✈️', '🎬', '💻', '🌟', '🔥', '❤️'];
 
 export default function Goals() {
-  const [goals, setGoals] = load<Goal[]>('goals', []);
+  const [goals, setGoals] = usePersist<Goal[]>('goals', []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showEmoji, setShowEmoji] = useState<string | null>(null);
   const [newMilestone, setNewMilestone] = useState('');

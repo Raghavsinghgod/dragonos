@@ -1,12 +1,12 @@
 // DragonOS Clipboard App
 import { useState, useEffect } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 
 interface ClipItem { id: string; text: string; time: number; }
 
 export default function Clipboard() {
-  const [items, setItems] = load<ClipItem[]>('clipboard-items', []);
+  const [items, setItems] = usePersist<ClipItem[]>('clipboard-items', []);
   const [manualInput, setManualInput] = useState('');
 
   // Listen for clipboard paste

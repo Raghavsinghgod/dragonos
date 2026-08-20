@@ -1,13 +1,13 @@
 // DragonOS Pomodoro App
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { sounds } from '../sounds';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 
 export default function Pomodoro() {
   const [mode, setMode] = useState<'work' | 'break'>('work');
   const [seconds, setSeconds] = useState(25 * 60);
   const [running, setRunning] = useState(false);
-  const [sessions, setSessions] = load('pomodoro-sessions', 0);
+  const [sessions, setSessions] = usePersist<number>('pomodoro-sessions', 0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const WORK = 25 * 60;
@@ -22,7 +22,7 @@ export default function Pomodoro() {
           setRunning(false);
           if (mode === 'work') {
             sounds.complete();
-            setSessions(s => { const n = s + 1; save('pomodoro-sessions', n); return n; });
+            setSessions(s => s + 1);
             setMode('break');
             return BREAK;
           } else {

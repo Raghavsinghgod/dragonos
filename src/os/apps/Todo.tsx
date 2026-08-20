@@ -1,6 +1,6 @@
 // DragonOS Todo App
 import { useState, useEffect, useMemo } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 import type { TodoItem } from '../types';
 
@@ -14,7 +14,7 @@ const priorityColors: Record<Priority, string> = {
 };
 
 export default function Todo() {
-  const [todos, setTodos] = load<TodoItem[]>('todos', []);
+  const [todos, setTodos] = usePersist<TodoItem[]>('todos', []);
   const [filter, setFilter] = useState<Filter>('all');
   const [newText, setNewText] = useState('');
   const [celebrated, setCelebrated] = useState(false);

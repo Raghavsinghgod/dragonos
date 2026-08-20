@@ -1,6 +1,6 @@
 // DragonOS Expenses App
 import { useState, useMemo } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 import type { Expense } from '../types';
 
@@ -11,11 +11,11 @@ const catColors: Record<string, string> = {
 };
 
 export default function Expenses() {
-  const [expenses, setExpenses] = load<Expense[]>('expenses-list', []);
+  const [expenses, setExpenses] = usePersist<Expense[]>('expenses-list', []);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(categories[0]);
   const [note, setNote] = useState('');
-  const [budget, setBudget] = load('expenses-budget', 2000);
+  const [budget, setBudget] = usePersist('expenses-budget', 2000);
 
   const month = new Date().toISOString().slice(0, 7);
   const monthExpenses = expenses.filter(e => e.date.startsWith(month));
@@ -61,7 +61,7 @@ export default function Expenses() {
         <div>
           <p className="text-lg text-white/80 font-mono">${total.toFixed(2)}</p>
           <p className="text-[9px] text-white/30">of ${budget} budget</p>
-          <input type="number" value={budget} onChange={e => { setBudget(Number(e.target.value)); save('expenses-budget', Number(e.target.value)); }}
+          <input type="number" value={budget} onChange={e => setBudget(Number(e.target.value))}
             className="mt-1 text-[9px] bg-white/5 rounded px-2 py-1 text-white/40 w-20 outline-none" />
         </div>
       </div>

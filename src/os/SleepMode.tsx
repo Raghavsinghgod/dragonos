@@ -1,8 +1,8 @@
 // DragonOS Sleep Mode
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from '../context';
-import { sounds } from '../sounds';
+import { useOS } from './context';
+import { sounds } from './sounds';
 
 export default function SleepMode() {
   const { state, dispatch } = useOS();

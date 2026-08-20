@@ -1,8 +1,8 @@
 // DragonOS Desktop Icons - Gradient tiles for pinned apps
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useOS } from '../context';
-import { sounds } from '../sounds';
+import { useOS } from './context';
+import { sounds } from './sounds';
 
 interface DesktopApp {
   id: string;

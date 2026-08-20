@@ -1,11 +1,11 @@
 // DragonOS Vault App
 import { useState } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 import type { Bookmark } from '../types';
 
 export default function Vault() {
-  const [bookmarks, setBookmarks] = load<Bookmark[]>('vault-bookmarks', []);
+  const [bookmarks, setBookmarks] = usePersist<Bookmark[]>('vault-bookmarks', []);
   const [query, setQuery] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [newUrl, setNewUrl] = useState('');

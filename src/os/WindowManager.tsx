@@ -1,9 +1,9 @@
 // DragonOS Window Manager - Floating windows with drag, resize, snap, z-stacking
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from '../context';
-import { sounds } from '../sounds';
-import type { WindowState } from '../types';
+import { useOS } from './context';
+import { sounds } from './sounds';
+import type { WindowState } from './types';
 
 function WindowFrame({ win }: { win: WindowState }) {
   const { state, dispatch, closeApp } = useOS();
@@ -107,7 +107,7 @@ function WindowFrame({ win }: { win: WindowState }) {
   };
 
   // Get app component from registry
-  const appComponent = appComponents[win.appId];
+  const AppComponent = appComponents[win.appId];
 
   const resizeCursors: Record<string, string> = {
     n: 'cursor-n-resize', s: 'cursor-s-resize', e: 'cursor-e-resize', w: 'cursor-w-resize',
@@ -163,7 +163,7 @@ function WindowFrame({ win }: { win: WindowState }) {
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        {appComponent && <appComponent windowId={win.id} />}
+        {AppComponent && <AppComponent windowId={win.id} />}
       </div>
 
       {/* Resize handles (8 directions) */}

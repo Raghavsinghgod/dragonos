@@ -1,13 +1,13 @@
 // DragonOS Kanban Board
 import { useState } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 import type { KanbanColumn } from '../types';
 
 const tagColors = ['#dc2626', '#3b82f6', '#22c55e', '#f59e0b', '#a855f7'];
 
 export default function Kanban() {
-  const [columns, setColumns] = load<KanbanColumn[]>('kanban-cols', [
+  const [columns, setColumns] = usePersist<KanbanColumn[]>('kanban-cols', [
     { id: '1', title: 'To Do', cards: [] },
     { id: '2', title: 'In Progress', cards: [] },
     { id: '3', title: 'Done', cards: [] },

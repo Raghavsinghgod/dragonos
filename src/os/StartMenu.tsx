@@ -1,8 +1,8 @@
 // DragonOS Start Menu - Searchable app launcher grid
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from '../context';
-import { sounds } from '../sounds';
+import { useOS } from './context';
+import { sounds } from './sounds';
 
 interface AppInfo {
   id: string;

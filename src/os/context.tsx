@@ -9,6 +9,7 @@ interface OSState {
   toasts: Toast[];
   nextZ: number;
   konamiProgress: number[];
+  windowOrder: string[];
 }
 
 type OSAction =
@@ -223,6 +224,7 @@ function osReducer(state: OSState, action: OSAction): OSState {
         toasts: [],
         nextZ: 0,
         konamiProgress: [],
+        windowOrder: [],
       };
     default:
       return state;
@@ -262,6 +264,7 @@ export function OSProvider({ children }: { children: React.ReactNode }) {
     toasts: [],
     nextZ: 10,
     konamiProgress: [],
+    windowOrder: [],
   });
 
   // Save desktop state

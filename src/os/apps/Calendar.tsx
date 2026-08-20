@@ -1,10 +1,10 @@
 // DragonOS Calendar App
 import { useState, useMemo } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import type { CalendarEvent } from '../types';
 
 export default function Calendar() {
-  const [events, setEvents] = load<CalendarEvent[]>('calendar-events', []);
+  const [events, setEvents] = usePersist<CalendarEvent[]>('calendar-events', []);
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [newEvent, setNewEvent] = useState('');

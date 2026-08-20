@@ -1,8 +1,8 @@
 // DragonOS Dock - Apple-style with magnification, running indicators, tooltips
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from '../context';
-import { sounds } from '../sounds';
+import { useOS } from './context';
+import { sounds } from './sounds';
 
 interface DockItem {
   id: string;

@@ -1,8 +1,8 @@
 // DragonOS Boot Sequence - Apple-style animated boot with dragon SVG
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from '../context';
-import { sounds } from '../sounds';
+import { useOS } from './context';
+import { sounds } from './sounds';
 
 export default function BootSequence() {
   const { state, dispatch } = useOS();

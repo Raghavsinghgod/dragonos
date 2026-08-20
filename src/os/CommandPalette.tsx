@@ -1,8 +1,8 @@
 // DragonOS Command Palette - Ctrl+K Raycast-style fuzzy search
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from '../context';
-import { sounds } from '../sounds';
+import { useOS } from './context';
+import { sounds } from './sounds';
 import { allApps } from './StartMenu';
 
 export default function CommandPalette() {

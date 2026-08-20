@@ -1,11 +1,11 @@
 // DragonOS Journal App
 import { useState } from 'react';
-import { save, load } from '../persist';
+import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 import type { JournalEntry } from '../types';
 
 export default function Journal() {
-  const [entries, setEntries] = load<JournalEntry[]>('journal-entries', []);
+  const [entries, setEntries] = usePersist<JournalEntry[]>('journal-entries', []);
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
   const [content, setContent] = useState(entries.find(e => e.date === selectedDate)?.content || '');

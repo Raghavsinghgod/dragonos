@@ -1,6 +1,7 @@
 // DragonOS App Registry
 import type { ComponentType } from 'react';
-import { setAppRegistry, setAppComponents } from '../context';
+import { setAppRegistry } from '../context';
+import { setAppComponents } from '../WindowManager';
 
 // Lazy imports for all apps
 import Dashboard from './Dashboard';

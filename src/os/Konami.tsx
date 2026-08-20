@@ -1,7 +1,7 @@
 // DragonOS Konami Code Easter Egg
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { sounds } from '../sounds';
+import { sounds } from './sounds';
 
 interface Particle {
   id: number;
