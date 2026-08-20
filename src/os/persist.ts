@@ -1,5 +1,5 @@
-// DragonOS Persistence Layer - localStorage with dragonos.* namespace
-import { useState, useEffect, useCallback } from 'react';
+// DragonOS Persistence Layer - Optimized localStorage with debounced saves
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const PREFIX = 'dragonos.';
 
@@ -32,29 +32,30 @@ export function clearAll(): void {
 }
 
 /**
- * React hook: useState + localStorage persistence.
- * Usage: const [items, setItems] = usePersist<MyType[]>('key', []);
+ * React hook: useState + localStorage persistence with debounced writes.
+ * Only writes to localStorage after 500ms of no updates to avoid thrashing.
  */
 export function usePersist<T>(key: string, fallback: T): [T, (value: T | ((prev: T) => T)) => void] {
   const [value, setValue] = useState<T>(() => load(key, fallback));
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    save(key, value);
+    // Debounced save — only write after 500ms of no changes
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => save(key, value), 500);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [key, value]);
 
   return [value, setValue];
 }
 
 /**
- * React hook: just a persisted value without auto-save (for derived/external writes).
+ * Optimized debounced save — for imperative saves outside React.
  */
-export function usePersistedValue<T>(key: string, fallback: T): [T, (value: T) => void] {
-  const [value, _setValue] = useState<T>(() => load(key, fallback));
-
-  const setValue = useCallback((v: T) => {
-    _setValue(v);
-    save(key, v);
-  }, [key]);
-
-  return [value, setValue];
+export function useDebouncedSave(key: string, delay = 500) {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  return useCallback((data: unknown) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => save(key, data), delay);
+  }, [key, delay]);
 }

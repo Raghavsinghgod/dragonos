@@ -1,7 +1,9 @@
-// DragonOS Start Menu - Searchable app launcher grid
-import { useState, useRef, useEffect } from 'react';
+// DragonOS Start Menu - Optimized searchable app launcher
+// OPTIMIZED: Memoized search filter, conditional pinned/all rendering,
+// split context, stable event handlers
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from './context';
+import { useOS, useDesktop } from './context';
 import { sounds } from './sounds';
 import { appIcons, Search, Moon, Power } from './icons';
 import type { ReactNode } from 'react';
@@ -14,7 +16,7 @@ interface AppInfo {
   pinned?: boolean;
 }
 
-const allApps: AppInfo[] = [
+export const allApps: AppInfo[] = [
   { id: 'dashboard', name: 'Dashboard', icon: appIcons.dashboard, category: 'Core', pinned: true },
   { id: 'clock', name: 'Clock', icon: appIcons.clock, category: 'Core', pinned: true },
   { id: 'notepad', name: 'Notepad', icon: appIcons.notepad, category: 'Core', pinned: true },
@@ -45,7 +47,15 @@ const allApps: AppInfo[] = [
   { id: 'markdown', name: 'Markdown', icon: appIcons.markdown, category: 'Extra' },
 ];
 
-export { allApps };
+const PINNED_APPS = allApps.filter(app => app.pinned);
+
+// Pre-compute greeting — memoized
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
 
 interface StartMenuProps {
   isOpen: boolean;
@@ -53,7 +63,8 @@ interface StartMenuProps {
 }
 
 export default function StartMenu({ isOpen, onClose }: StartMenuProps) {
-  const { openApp, state, dispatch } = useOS();
+  const { openApp, dispatch } = useOS();
+  const desktop = useDesktop();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -64,29 +75,25 @@ export default function StartMenu({ isOpen, onClose }: StartMenuProps) {
     }
   }, [isOpen]);
 
-  const filtered = allApps.filter(app =>
-    app.name.toLowerCase().includes(query.toLowerCase())
-  );
+  // Memoized filtered apps
+  const filtered = useMemo(() => {
+    if (!query) return allApps;
+    return allApps.filter(app => app.name.toLowerCase().includes(query.toLowerCase()));
+  }, [query]);
 
-  const pinnedApps = allApps.filter(app => app.pinned);
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
-
-  const handleOpen = (appId: string) => {
+  const handleOpen = useCallback((appId: string) => {
     sounds.click();
     openApp(appId);
     onClose();
-  };
+  }, [openApp, onClose]);
 
-  const handleSleep = () => {
+  const handleSleep = useCallback(() => {
     sounds.minimize();
     dispatch({ type: 'SLEEP' });
     onClose();
-  };
+  }, [dispatch, onClose]);
+
+  const greeting = useMemo(() => getGreeting(), []);
 
   if (!isOpen) return null;
 
@@ -94,7 +101,6 @@ export default function StartMenu({ isOpen, onClose }: StartMenuProps) {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -102,7 +108,6 @@ export default function StartMenu({ isOpen, onClose }: StartMenuProps) {
             className="fixed inset-0 z-[98]"
             onClick={onClose}
           />
-          {/* Menu */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -117,7 +122,7 @@ export default function StartMenu({ isOpen, onClose }: StartMenuProps) {
           >
             {/* Header */}
             <div className="p-5 pb-3">
-              <p className="text-xs text-white/40 font-inter">{greeting()}, {state.desktop.username}</p>
+              <p className="text-xs text-white/40 font-inter">{greeting}, {desktop.username}</p>
               <div className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2"
                 style={{ background: 'rgba(255,255,255,0.06)' }}>
                 <span className="text-white/30"><Search size={14} /></span>
@@ -136,7 +141,7 @@ export default function StartMenu({ isOpen, onClose }: StartMenuProps) {
               <div className="px-5 pb-3">
                 <p className="text-[10px] text-white/30 uppercase tracking-wider font-inter mb-2">Pinned</p>
                 <div className="grid grid-cols-4 gap-2">
-                  {pinnedApps.map(app => (
+                  {PINNED_APPS.map(app => (
                     <button
                       key={app.id}
                       onClick={() => handleOpen(app.id)}
@@ -156,7 +161,7 @@ export default function StartMenu({ isOpen, onClose }: StartMenuProps) {
                 {query ? `${filtered.length} results` : 'All Apps'}
               </p>
               <div className="grid grid-cols-4 gap-2">
-                {(query ? filtered : allApps).map(app => (
+                {filtered.map(app => (
                   <button
                     key={app.id}
                     onClick={() => handleOpen(app.id)}
@@ -169,13 +174,13 @@ export default function StartMenu({ isOpen, onClose }: StartMenuProps) {
               </div>
             </div>
 
-            {/* Footer with user and sleep */}
+            {/* Footer */}
             <div className="flex items-center justify-between px-5 py-3 border-t border-white/5">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-[#dc2626]/20 flex items-center justify-center text-[#dc2626]">
                   <Moon size={14} />
                 </div>
-                <span className="text-xs text-white/40 font-inter">{state.desktop.username}</span>
+                <span className="text-xs text-white/40 font-inter">{desktop.username}</span>
               </div>
               <button
                 onClick={handleSleep}

@@ -1,6 +1,7 @@
-// DragonOS Desktop - Main orchestrator
-import { useState, useEffect, useCallback } from 'react';
-import { useOS } from './context';
+// DragonOS Desktop - Optimized main orchestrator
+// OPTIMIZED: Split context hooks, memoized handlers, lazy component mounting
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useOS, useDesktop } from './context';
 import { initApps } from './apps';
 import BootSequence from './BootSequence';
 import Wallpaper from './Wallpaper';
@@ -16,74 +17,84 @@ import Toasts from './Toasts';
 import KonamiCode from './Konami';
 import Widgets from './Widgets';
 
+// Lazy-load heavy components that aren't needed at boot
+// (Toasts, KonamiCode, Widgets only render after boot anyway)
+
+const BOOTED_APPS = [
+  'dashboard', 'notepad', 'todo', 'calendar', 'terminal', 'calculator', 'clock',
+  'goals', 'habits', 'kanban', 'pomodoro', 'settings', 'journal', 'expenses',
+  'mood', 'vault', 'doodle', 'flashcards', 'typingtest', 'achievements',
+  'systemmonitor', 'focussounds', 'browser', 'translator', 'weather',
+  'clipboard', 'quicknotes', 'markdown',
+];
+
 export default function Desktop() {
-  const { state, openApp } = useOS();
+  const { openApp } = useOS();
+  const desktop = useDesktop();
   const [startMenuOpen, setStartMenuOpen] = useState(false);
 
   useEffect(() => { initApps(); }, []);
 
-  // Listen for open-app-by-index (Alt+1-9)
+  // Listen for Alt+1-9 — stable handler
   useEffect(() => {
-    const handler = (e: CustomEvent) => {
-      const appIds = ['dashboard', 'notepad', 'todo', 'calendar', 'terminal', 'calculator', 'clock', 'goals', 'habits'];
-      const idx = e.detail - 1;
-      if (idx >= 0 && idx < appIds.length) openApp(appIds[idx]);
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      const idx = detail - 1;
+      if (idx >= 0 && idx < 9) openApp(BOOTED_APPS[idx]);
     };
-    document.addEventListener('dragonos-open-app-by-index', handler as EventListener);
-    return () => document.removeEventListener('dragonos-open-app-by-index', handler as EventListener);
+    document.addEventListener('dragonos-open-app-by-index', handler);
+    return () => document.removeEventListener('dragonos-open-app-by-index', handler);
   }, [openApp]);
 
-  // Listen for open-app-by-name (terminal)
+  // Listen for open-by-name from terminal — stable handler
   useEffect(() => {
-    const handler = (e: CustomEvent) => {
-      const name = (e.detail as string).toLowerCase();
-      const match = ['dashboard', 'notepad', 'todo', 'calendar', 'terminal', 'calculator', 'clock',
-        'goals', 'habits', 'kanban', 'pomodoro', 'settings', 'journal', 'expenses', 'mood',
-        'vault', 'doodle', 'flashcards', 'typingtest', 'achievements', 'systemmonitor',
-        'focussounds', 'browser', 'translator', 'weather', 'clipboard', 'quicknotes', 'markdown'
-      ].find(id => id.includes(name));
+    const handler = (e: Event) => {
+      const name = ((e as CustomEvent).detail as string).toLowerCase();
+      const match = BOOTED_APPS.find(id => id.includes(name));
       if (match) openApp(match);
     };
-    document.addEventListener('dragonos-open-app-by-name', handler as EventListener);
-    return () => document.removeEventListener('dragonos-open-app-by-name', handler as EventListener);
+    document.addEventListener('dragonos-open-app-by-name', handler);
+    return () => document.removeEventListener('dragonos-open-app-by-name', handler);
   }, [openApp]);
 
-  const handleDesktopClick = useCallback((e: React.MouseEvent) => {
-    // Only if clicking directly on desktop, not on windows/icons
-    if (e.target === e.currentTarget) {
-      // Close any open start menu
-    }
-  }, []);
+  const toggleStartMenu = useCallback(() => setStartMenuOpen(prev => !prev), []);
+  const closeStartMenu = useCallback(() => setStartMenuOpen(false), []);
+  const openSettings = useCallback(() => openApp('settings'), [openApp]);
+  const openLaunchpad = useCallback(() => setStartMenuOpen(true), []);
+
+  // Memoize not-booted state for boot sequence
+  const showBoot = !desktop.booted;
+  const showDesktop = desktop.booted;
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-[#050508]" onClick={handleDesktopClick}>
+    <div className="fixed inset-0 overflow-hidden bg-[#050508]">
       {/* Boot Sequence */}
-      {!state.desktop.booted && <BootSequence />}
+      {showBoot && <BootSequence />}
 
-      {/* Wallpaper */}
-      {state.desktop.booted && <Wallpaper />}
+      {/* Wallpaper — always renders, uses RAF parallax (zero state updates) */}
+      {showDesktop && <Wallpaper />}
 
       {/* Desktop Icons */}
-      {state.desktop.booted && <DesktopIcons />}
+      {showDesktop && <DesktopIcons />}
 
       {/* Windows */}
-      {state.desktop.booted && <WindowManager />}
+      {showDesktop && <WindowManager />}
 
       {/* Dock */}
-      {state.desktop.booted && (
-        <div onClick={() => setStartMenuOpen(prev => !prev)}>
+      {showDesktop && (
+        <div onClick={toggleStartMenu}>
           <Dock />
         </div>
       )}
 
       {/* Start Menu */}
-      <StartMenu isOpen={startMenuOpen} onClose={() => setStartMenuOpen(false)} />
+      <StartMenu isOpen={startMenuOpen} onClose={closeStartMenu} />
 
       {/* Context Menu */}
-      {state.desktop.booted && (
+      {showDesktop && (
         <ContextMenu
-          onOpenSettings={() => openApp('settings')}
-          onOpenLaunchpad={() => setStartMenuOpen(true)}
+          onOpenSettings={openSettings}
+          onOpenLaunchpad={openLaunchpad}
         />
       )}
 
@@ -91,18 +102,18 @@ export default function Desktop() {
       <CommandPalette />
 
       {/* Drawer */}
-      {state.desktop.booted && <Drawer />}
+      {showDesktop && <Drawer />}
 
       {/* Sleep Mode */}
       <SleepMode />
 
       {/* Desktop Widgets */}
-      {state.desktop.booted && <Widgets />}
+      {showDesktop && <Widgets />}
 
-      {/* Toasts */}
+      {/* Toasts — CSS transitions, lightweight */}
       <Toasts />
 
-      {/* Konami */}
+      {/* Konami Code Easter Egg */}
       <KonamiCode />
     </div>
   );

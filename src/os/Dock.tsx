@@ -1,7 +1,9 @@
-// DragonOS Dock - Apple-style with magnification, running indicators, tooltips
-import { useState, useRef, useCallback } from 'react';
+// DragonOS Dock - Optimized Apple-style magnification
+// OPTIMIZED: CSS-driven magnification via transform, React.memo dock items,
+// memoized computations, zero unnecessary re-renders
+import { memo, useMemo, useCallback, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from './context';
+import { useOS, useWindows } from './context';
 import { sounds } from './sounds';
 import { appIcons } from './icons';
 import type { ReactNode } from 'react';
@@ -13,7 +15,7 @@ interface DockItem {
   order: number;
 }
 
-const dockItems: DockItem[] = [
+const DOCK_ITEMS: DockItem[] = [
   { id: 'dashboard', name: 'Dashboard', icon: appIcons.dashboard, order: 0 },
   { id: 'notepad', name: 'Notepad', icon: appIcons.notepad, order: 1 },
   { id: 'calendar', name: 'Calendar', icon: appIcons.calendar, order: 2 },
@@ -24,17 +26,76 @@ const dockItems: DockItem[] = [
   { id: 'settings', name: 'Settings', icon: appIcons.settings, order: 7 },
 ];
 
+const SORTED_ITEMS = [...DOCK_ITEMS].sort((a, b) => a.order - b.order);
+
+// Individual dock button — memoized
+const DockButton = memo(function DockButton({
+  item,
+  isRunning,
+  scale,
+  isHovered,
+  onMouseEnter,
+  onMouseLeave,
+  onOpen,
+}: {
+  item: DockItem;
+  isRunning: boolean;
+  scale: number;
+  isHovered: boolean;
+  onMouseEnter: (e: React.MouseEvent, index: number) => void;
+  onMouseLeave: () => void;
+  onOpen: (id: string) => void;
+}) {
+  const idx = SORTED_ITEMS.indexOf(item);
+
+  return (
+    <div
+      className="dock-item"
+      onMouseEnter={(e) => onMouseEnter(e, idx)}
+      onMouseLeave={onMouseLeave}
+    >
+      <button
+        onMouseUp={() => { sounds.click(); onOpen(item.id); }}
+        className="dock-btn"
+        style={{
+          transform: `scale(${scale}) translateY(${isHovered ? -8 : 0}px)`,
+          filter: isHovered ? 'drop-shadow(0 0 8px rgba(220,38,38,0.5))' : 'none',
+          transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s',
+        }}
+      >
+        <span className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-[#dc2626]">
+          {item.icon}
+        </span>
+        {isRunning && (
+          <div className="dock-indicator" />
+        )}
+      </button>
+    </div>
+  );
+});
+
 export default function Dock() {
-  const { state, openApp } = useOS();
+  const openApp = useOS().openApp;
+  const windows = useWindows();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltip, setTooltip] = useState<{ name: string; x: number } | null>(null);
   const dockRef = useRef<HTMLDivElement>(null);
 
+  // Memoized running apps set — only recalculates when windows change
+  const runningApps = useMemo(() => {
+    const set = new Set<string>();
+    for (const w of Object.values(windows)) {
+      if (w.isOpen && !w.minimized) set.add(w.appId);
+    }
+    return set;
+  }, [windows]);
+
+  // Stable callbacks
   const handleMouseMove = useCallback((e: React.MouseEvent, index: number) => {
     setHoveredIndex(index);
     if (dockRef.current) {
       const rect = dockRef.current.getBoundingClientRect();
-      setTooltip({ name: dockItems[index].name, x: e.clientX - rect.left });
+      setTooltip({ name: SORTED_ITEMS[index].name, x: e.clientX - rect.left });
     }
   }, []);
 
@@ -43,6 +104,11 @@ export default function Dock() {
     setTooltip(null);
   }, []);
 
+  const handleOpen = useCallback((id: string) => {
+    openApp(id);
+  }, [openApp]);
+
+  // Scale calculation — pure function, no state
   const getScale = useCallback((index: number) => {
     if (hoveredIndex === null) return 1;
     const distance = Math.abs(index - hoveredIndex);
@@ -51,13 +117,6 @@ export default function Dock() {
     if (distance === 2) return 1.08;
     return 1;
   }, [hoveredIndex]);
-
-  const runningApps = Object.values(state.windows)
-    .filter(w => w.isOpen && !w.minimized)
-    .map(w => w.appId);
-
-  // Sort by dock order
-  const sortedItems = [...dockItems].sort((a, b) => a.order - b.order);
 
   return (
     <motion.div
@@ -68,56 +127,20 @@ export default function Dock() {
     >
       <div
         ref={dockRef}
-        onMouseLeave={handleMouseLeave}
-        className="relative flex items-end gap-1 px-3 pb-2 pt-1.5 rounded-2xl"
-        style={{
-          background: 'rgba(12,12,18,0.6)',
-          backdropFilter: 'blur(48px)',
-          border: '1px solid rgba(255,255,255,0.06)',
-        }}
+        className="dock-bar"
       >
-        {sortedItems.map((item, index) => {
-          const isRunning = runningApps.includes(item.id);
-          const scale = getScale(index);
-          const isHovered = hoveredIndex === index;
-
-          return (
-            <motion.button
-              key={item.id}
-              onMouseEnter={(e) => handleMouseMove(e, index)}
-              onMouseUp={() => {
-                sounds.click();
-                openApp(item.id);
-              }}
-              animate={{
-                scale,
-                y: isHovered ? -8 : 0,
-              }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              className="relative flex flex-col items-center group text-[#dc2626]"
-            >
-              <motion.span
-                className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10"
-                animate={{
-                  filter: isHovered ? 'drop-shadow(0 0 8px rgba(220,38,38,0.5))' : 'none',
-                }}
-              >
-                {item.icon}
-              </motion.span>
-              {/* Running indicator dot */}
-              {isRunning && (
-                <motion.div
-                  className="absolute -bottom-1 w-1 h-1 rounded-full bg-[#dc2626]"
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  style={{
-                    boxShadow: '0 0 6px rgba(220,38,38,0.8)',
-                  }}
-                />
-              )}
-            </motion.button>
-          );
-        })}
+        {SORTED_ITEMS.map((item) => (
+          <DockButton
+            key={item.id}
+            item={item}
+            isRunning={runningApps.has(item.id)}
+            scale={getScale(SORTED_ITEMS.indexOf(item))}
+            isHovered={hoveredIndex === SORTED_ITEMS.indexOf(item)}
+            onMouseEnter={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            onOpen={handleOpen}
+          />
+        ))}
 
         {/* Tooltip */}
         <AnimatePresence>
@@ -126,13 +149,8 @@ export default function Dock() {
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
-              className="absolute -top-8 px-2 py-0.5 rounded text-[10px] text-white/80 font-inter whitespace-nowrap"
-              style={{
-                left: tooltip.x,
-                transform: 'translateX(-50%)',
-                background: 'rgba(12,12,18,0.9)',
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
+              className="dock-tooltip"
+              style={{ left: tooltip.x, transform: 'translateX(-50%)' }}
             >
               {tooltip.name}
             </motion.div>

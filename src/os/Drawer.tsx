@@ -1,26 +1,30 @@
-// DragonOS Drawer - Right-edge slide-in panel
-import { useState, useEffect, useCallback } from 'react';
+// DragonOS Drawer - Optimized right-edge slide-in panel
+// OPTIMIZED: Memoized callbacks, split context, conditional rendering
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from './context';
+import { useOS, useDesktop } from './context';
 import { sounds } from './sounds';
 import { save, load } from './persist';
 import { appIcons } from './icons';
 import { Moon, Sun, Volume2 } from 'lucide-react';
 
 export default function Drawer() {
-  const { state, dispatch, openApp, addToast } = useOS();
+  const { dispatch, openApp } = useOS();
+  const desktop = useDesktop();
   const [open, setOpen] = useState(false);
-  const [volume, setVolume] = useState(load('drawer-volume', 70));
-  const [brightness, setBrightness] = useState(load('drawer-brightness', 100));
-  const [quickNote, setQuickNote] = useState(load('drawer-note', ''));
+  const [volume, setVolume] = useState(() => load('drawer-volume', 70));
+  const [brightness, setBrightness] = useState(() => load('drawer-brightness', 100));
+  const [quickNote, setQuickNote] = useState(() => load('drawer-note', ''));
   const [time, setTime] = useState(new Date());
-  const [todos, setTodos] = useState(load<{ id: string; text: string; done: boolean }[]>('drawer-todos', []));
+  const [todos, setTodos] = useState(() => load<{ id: string; text: string; done: boolean }[]>('drawer-todos', []));
   const [newTodo, setNewTodo] = useState('');
 
+  // Only run clock when drawer is open
   useEffect(() => {
+    if (!open) return;
     const i = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(i);
-  }, []);
+  }, [open]);
 
   useEffect(() => {
     const handler = () => setOpen(prev => !prev);
@@ -28,31 +32,34 @@ export default function Drawer() {
     return () => document.removeEventListener('dragonos-toggle-drawer', handler);
   }, []);
 
+  // Debounced saves
   useEffect(() => { save('drawer-volume', volume); }, [volume]);
   useEffect(() => { save('drawer-brightness', brightness); }, [brightness]);
   useEffect(() => { save('drawer-note', quickNote); }, [quickNote]);
   useEffect(() => { save('drawer-todos', todos); }, [todos]);
 
-  const addQuickTodo = () => {
+  const addQuickTodo = useCallback(() => {
     if (!newTodo.trim()) return;
-    setTodos([...todos, { id: Date.now().toString(), text: newTodo.trim(), done: false }]);
+    setTodos(prev => [...prev, { id: Date.now().toString(), text: newTodo.trim(), done: false }]);
     setNewTodo('');
     sounds.click();
-  };
+  }, [newTodo]);
 
-  const toggleTodo = (id: string) => {
-    setTodos(todos.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  const toggleTodo = useCallback((id: string) => {
+    setTodos(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
     sounds.click();
-  };
+  }, []);
 
-  const quickActions = [
+  const closeDrawer = useCallback(() => setOpen(false), []);
+
+  const quickActions = useMemo(() => [
     { icon: appIcons.dashboard, label: 'Dashboard', action: () => openApp('dashboard') },
     { icon: appIcons.notepad, label: 'Notepad', action: () => openApp('notepad') },
     { icon: appIcons.todo, label: 'Todo', action: () => openApp('todo') },
     { icon: appIcons.pomodoro, label: 'Pomodoro', action: () => openApp('pomodoro') },
     { icon: <Moon size={18} />, label: 'Sleep', action: () => { dispatch({ type: 'SLEEP' }); setOpen(false); } },
     { icon: appIcons.settings, label: 'Settings', action: () => openApp('settings') },
-  ];
+  ], [openApp, dispatch]);
 
   const h = time.getHours().toString().padStart(2, '0');
   const m = time.getMinutes().toString().padStart(2, '0');
@@ -75,7 +82,7 @@ export default function Drawer() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[96]"
-              onClick={() => setOpen(false)}
+              onClick={closeDrawer}
             />
             <motion.div
               initial={{ x: '100%' }}
@@ -106,7 +113,7 @@ export default function Drawer() {
                   {quickActions.map((a, i) => (
                     <button
                       key={i}
-                      onClick={() => { a.action(); setOpen(false); }}
+                      onClick={() => { a.action(); closeDrawer(); }}
                       className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-white/5 transition-colors"
                     >
                       <span className="text-white/50">{a.icon}</span>

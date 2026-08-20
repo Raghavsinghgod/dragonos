@@ -219,3 +219,195 @@
 .animate-orbFloat { animation: orbFloat 4s ease-in-out infinite; }
 .animate-terminalBlink { animation: terminalBlink 1s step-end infinite; }
 .animate-slideUp { animation: slideUp 0.6s ease-out forwards; }
+
+/* ═══ DragonOS Optimized Animations ═══ */
+
+/* Stars — replaces 50 framer-motion instances */
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  pointer-events: none;
+  animation: starTwinkle var(--duration, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.08; }
+  50% { opacity: 0.5; }
+}
+
+/* Embers — replaces 10 framer-motion instances */
+.ember {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, #dc2626 0%, #7f1d1d 50%, transparent 100%);
+  pointer-events: none;
+  animation: emberRise var(--duration, 6s) ease-out infinite;
+  animation-delay: var(--delay, 0s);
+  opacity: 0;
+}
+@keyframes emberRise {
+  0% { transform: translateY(0) translateX(0); opacity: 0.7; }
+  100% { transform: translateY(-350px) translateX(25px); opacity: 0; }
+}
+
+/* Dragon float — replaces framer-motion animate */
+.dragon-float {
+  animation: dragonWallpaperFloat 6s ease-in-out infinite;
+  transition: transform 0.15s ease-out;
+}
+@keyframes dragonWallpaperFloat {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateY(-5px); }
+}
+
+/* Boot sequence — CSS-only animations */
+.boot-dragon {
+  animation: bootDragonIn 0.6s ease-out forwards;
+}
+@keyframes bootDragonIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+.boot-glow-pulse {
+  animation: bootGlowPulse 2s ease-in-out infinite;
+}
+@keyframes bootGlowPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+.boot-spinner {
+  width: 40px;
+  height: 40px;
+  border: 2px solid transparent;
+  border-top: 2px solid #dc2626;
+  border-radius: 50%;
+  animation: bootSpin 1s linear infinite;
+  position: relative;
+}
+.boot-spinner::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 2px solid transparent;
+  border-top: 2px solid rgba(220,38,38,0.5);
+  border-radius: 50%;
+  animation: bootSpinReverse 1.5s linear infinite;
+}
+@keyframes bootSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes bootSpinReverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+.boot-fade-out {
+  animation: bootFadeIn 0.3s ease-out;
+}
+@keyframes bootFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Toasts — CSS slide-in replacing framer-motion */
+.toast-item {
+  background: rgba(12,12,18,0.92);
+  backdrop-filter: blur(20px);
+  animation: toastSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             toastFadeOut 0.3s ease-in 2.7s forwards;
+}
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(100px) scale(0.9); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes toastFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; transform: translateX(100px); }
+}
+
+/* Konami confetti — CSS animation */
+.konami-particle {
+  position: absolute;
+  top: -50px;
+  font-size: 1.5rem;
+  pointer-events: none;
+  animation: konamiFall var(--duration, 4s) ease-in forwards;
+  animation-delay: var(--delay, 0s);
+  opacity: 0;
+}
+@keyframes konamiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+.konami-out {
+  animation: konamiFadeOut 1s ease-in 4s forwards;
+}
+@keyframes konamiFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.konami-message {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  animation: konamiMessageIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s both;
+}
+@keyframes konamiMessageIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Dock — optimized transitions */
+.dock-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 6px 12px 8px;
+  border-radius: 16px;
+  background: rgba(12,12,18,0.6);
+  backdrop-filter: blur(48px);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.dock-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dock-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  will-change: transform;
+}
+.dock-indicator {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #dc2626;
+  margin-top: 2px;
+  animation: dockIndicatorPulse 2s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(220,38,38,0.8);
+}
+@keyframes dockIndicatorPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.dock-tooltip {
+  position: absolute;
+  top: -32px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.8);
+  font-family: var(--font-inter);
+  white-space: nowrap;
+  background: rgba(12,12,18,0.9);
+  border: 1px solid rgba(255,255,255,0.08);
+  animation: tooltipFadeIn 0.15s ease-out;
+  pointer-events: none;
+}
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

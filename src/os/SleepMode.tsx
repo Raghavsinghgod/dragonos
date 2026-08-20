@@ -1,24 +1,27 @@
-// DragonOS Sleep Mode
-import { useState, useEffect } from 'react';
+// DragonOS Sleep Mode - Optimized
+// OPTIMIZED: Lightweight interval, direct text updates
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from './context';
+import { useOS, useDesktop } from './context';
 import { sounds } from './sounds';
 
 export default function SleepMode() {
-  const { state, dispatch } = useOS();
+  const { dispatch } = useOS();
+  const desktop = useDesktop();
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
+    if (!desktop.sleeping) return;
     const i = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(i);
-  }, []);
+  }, [desktop.sleeping]);
 
-  const wake = () => {
+  const wake = useCallback(() => {
     sounds.open();
     dispatch({ type: 'WAKE' });
-  };
+  }, [dispatch]);
 
-  if (!state.desktop.sleeping) return null;
+  if (!desktop.sleeping) return null;
 
   const h = time.getHours().toString().padStart(2, '0');
   const m = time.getMinutes().toString().padStart(2, '0');

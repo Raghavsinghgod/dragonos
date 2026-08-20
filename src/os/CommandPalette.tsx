@@ -1,5 +1,6 @@
-// DragonOS Command Palette - Ctrl+K Raycast-style fuzzy search
-import { useState, useEffect, useRef, useCallback } from 'react';
+// DragonOS Command Palette - Optimized Ctrl+K fuzzy search
+// OPTIMIZED: Memoized search, keyboard arrow navigation, split context
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS } from './context';
 import { sounds } from './sounds';
@@ -7,9 +8,10 @@ import { allApps } from './StartMenu';
 import { Search } from './icons';
 
 export default function CommandPalette() {
-  const { openApp } = useOS();
+  const openApp = useOS().openApp;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const toggle = useCallback(() => setOpen(prev => !prev), []);
@@ -23,6 +25,7 @@ export default function CommandPalette() {
   useEffect(() => {
     if (open) {
       setQuery('');
+      setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
@@ -38,15 +41,36 @@ export default function CommandPalette() {
     return () => window.removeEventListener('keydown', handler);
   }, [open]);
 
-  const results = allApps.filter(app =>
-    app.name.toLowerCase().includes(query.toLowerCase())
-  ).slice(0, 8);
+  // Memoized filtered results
+  const results = useMemo(() => {
+    return allApps.filter(app =>
+      app.name.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 8);
+  }, [query]);
 
-  const handleSelect = (appId: string) => {
+  // Keyboard navigation
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => Math.min(prev + 1, results.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter' && results[selectedIndex]) {
+      sounds.click();
+      openApp(results[selectedIndex].id);
+      setOpen(false);
+    }
+  }, [results, selectedIndex, openApp]);
+
+  // Reset selection when query changes
+  useEffect(() => { setSelectedIndex(0); }, [query]);
+
+  const handleSelect = useCallback((appId: string) => {
     sounds.click();
     openApp(appId);
     setOpen(false);
-  };
+  }, [openApp]);
 
   if (!open) return null;
 
@@ -80,6 +104,7 @@ export default function CommandPalette() {
                 ref={inputRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Search apps..."
                 className="flex-1 bg-transparent text-sm text-white/80 placeholder:text-white/30 outline-none font-inter"
               />
@@ -88,11 +113,13 @@ export default function CommandPalette() {
 
             {/* Results */}
             <div className="max-h-[320px] overflow-y-auto py-1">
-              {results.map(app => (
+              {results.map((app, i) => (
                 <button
                   key={app.id}
                   onClick={() => handleSelect(app.id)}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors text-[#dc2626]"
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 transition-colors text-[#dc2626] ${
+                    i === selectedIndex ? 'bg-white/5' : 'hover:bg-white/5'
+                  }`}
                 >
                   {app.icon}
                   <span className="text-sm text-white/70 font-inter">{app.name}</span>

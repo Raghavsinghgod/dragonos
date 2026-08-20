@@ -1,7 +1,8 @@
-// DragonOS Context Menu - Right-click desktop context menu
-import { useState, useEffect, useCallback } from 'react';
+// DragonOS Context Menu - Optimized
+// OPTIMIZED: Memoized callbacks, split context, stable menu items
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS } from './context';
+import { useOS, useDesktop } from './context';
 import { sounds } from './sounds';
 import { Columns3, Monitor, Settings, Rocket, Volume2, VolumeX, Palette, Moon, LayoutGrid } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -14,7 +15,8 @@ interface MenuItem {
 }
 
 export default function ContextMenu({ onOpenSettings, onOpenLaunchpad }: { onOpenSettings: () => void; onOpenLaunchpad: () => void }) {
-  const { dispatch, state } = useOS();
+  const { dispatch } = useOS();
+  const desktop = useDesktop();
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [open, setOpen] = useState(false);
 
@@ -24,33 +26,35 @@ export default function ContextMenu({ onOpenSettings, onOpenLaunchpad }: { onOpe
     setOpen(true);
   }, []);
 
+  const close = useCallback(() => setOpen(false), []);
+
   useEffect(() => {
-    const handleClick = () => setOpen(false);
     window.addEventListener('contextmenu', handleContext);
-    window.addEventListener('click', handleClick);
+    window.addEventListener('click', close);
     return () => {
       window.removeEventListener('contextmenu', handleContext);
-      window.removeEventListener('click', handleClick);
+      window.removeEventListener('click', close);
     };
-  }, [handleContext]);
+  }, [handleContext, close]);
 
-  const menuItems: MenuItem[] = [
+  // Memoize menu items — only rebuild when desktop state or dispatch changes
+  const menuItems: MenuItem[] = useMemo(() => [
     { label: 'Cascade Windows', icon: <Columns3 size={14} />, action: () => { dispatch({ type: 'CASCADE_WINDOWS' }); sounds.snap(); } },
     { label: 'Show Desktop', icon: <Monitor size={14} />, action: () => { dispatch({ type: 'SHOW_DESKTOP' }); sounds.minimize(); } },
     { label: 'Settings', icon: <Settings size={14} />, action: () => { onOpenSettings(); sounds.click(); } },
     { label: 'Launchpad', icon: <Rocket size={14} />, action: () => { onOpenLaunchpad(); sounds.click(); } },
     { label: 'Widgets', icon: <LayoutGrid size={14} />, action: () => { document.dispatchEvent(new CustomEvent('dragonos-toggle-widgets')); sounds.click(); } },
     { label: '', icon: null, action: () => {}, divider: true },
-    { label: 'Toggle Sound', icon: state.desktop.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />, action: () => { dispatch({ type: 'TOGGLE_SOUND' }); sounds.click(); } },
+    { label: 'Toggle Sound', icon: desktop.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />, action: () => { dispatch({ type: 'TOGGLE_SOUND' }); sounds.click(); } },
     { label: 'Cycle Wallpaper', icon: <Palette size={14} />, action: () => {
       const themes = ['dragon', 'minimal', 'neon'];
-      const next = themes[(themes.indexOf(state.desktop.wallpaperTheme) + 1) % themes.length];
+      const next = themes[(themes.indexOf(desktop.wallpaperTheme) + 1) % themes.length];
       dispatch({ type: 'SET_WALLPAPER', theme: next });
       sounds.snap();
     }},
     { label: '', icon: null, action: () => {}, divider: true },
     { label: 'Sleep', icon: <Moon size={14} />, action: () => { dispatch({ type: 'SLEEP' }); sounds.minimize(); } },
-  ];
+  ], [desktop.soundEnabled, desktop.wallpaperTheme, dispatch, onOpenSettings, onOpenLaunchpad]);
 
   if (!open) return null;
 

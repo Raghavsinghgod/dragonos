@@ -1,51 +1,73 @@
-// DragonOS Sound Engine - All sounds via WebAudio API
+// DragonOS Sound Engine - Optimized WebAudio API with lazy init and debouncing
 let audioCtx: AudioContext | null = null;
 
 function getCtx(): AudioContext {
-  if (!audioCtx) audioCtx = new AudioContext();
+  if (!audioCtx) {
+    audioCtx = new AudioContext();
+  }
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
+}
+
+// Debounce rapid-fire sounds (e.g., drag events)
+const lastPlay = new Map<string, number>();
+function canPlay(name: string, minGap = 30): boolean {
+  const now = performance.now();
+  const last = lastPlay.get(name) ?? 0;
+  if (now - last < minGap) return false;
+  lastPlay.set(name, now);
+  return true;
 }
 
 function play(fn: (ctx: AudioContext) => void) {
   try { fn(getCtx()); } catch { /* audio not available */ }
 }
 
-export const sounds = {
-  open: () => play(ctx => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(600, ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(); osc.stop(ctx.currentTime + 0.15);
-  }),
+// Memoized sound generators — reuse oscillator patterns
+const sounds = {
+  open: () => {
+    if (!canPlay('open', 50)) return;
+    play(ctx => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime + 0.15);
+    });
+  },
 
-  close: () => play(ctx => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(800, ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(400, ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.12, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(); osc.stop(ctx.currentTime + 0.15);
-  }),
+  close: () => {
+    if (!canPlay('close', 50)) return;
+    play(ctx => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(400, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime + 0.15);
+    });
+  },
 
-  click: () => play(ctx => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 1000;
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(); osc.stop(ctx.currentTime + 0.03);
-  }),
+  click: () => {
+    if (!canPlay('click', 20)) return;
+    play(ctx => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 1000;
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime + 0.03);
+    });
+  },
 
   complete: () => play(ctx => {
     [523.25, 659.25, 783.99].forEach((freq, i) => {
@@ -102,17 +124,20 @@ export const sounds = {
     osc.start(); osc.stop(ctx.currentTime + 0.25);
   }),
 
-  snap: () => play(ctx => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(700, ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(1200, ctx.currentTime + 0.06);
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(); osc.stop(ctx.currentTime + 0.08);
-  }),
+  snap: () => {
+    if (!canPlay('snap', 50)) return;
+    play(ctx => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(700, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(1200, ctx.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime + 0.08);
+    });
+  },
 
   minimize: () => play(ctx => {
     const osc = ctx.createOscillator();
@@ -164,3 +189,5 @@ export const sounds = {
     tri.start(); tri.stop(ctx.currentTime + 0.8);
   }),
 };
+
+export { sounds };

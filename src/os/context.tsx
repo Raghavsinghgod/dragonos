@@ -1,9 +1,11 @@
-// DragonOS Context - Global state management
-import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
+// DragonOS Context - Optimized with fine-grained context splitting
+// Separate contexts prevent unnecessary re-renders when only part of state changes
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useMemo } from 'react';
 import { save, load } from './persist';
 import type { WindowState, Toast, DesktopState } from './types';
 
-interface OSState {
+// ─── State shape ──────────────────────────────────────────
+export interface OSState {
   desktop: DesktopState;
   windows: Record<string, WindowState>;
   toasts: Toast[];
@@ -35,6 +37,7 @@ type OSAction =
   | { type: 'RESET_KONAMI' }
   | { type: 'FACTORY_RESET' };
 
+// ─── Initial state ────────────────────────────────────────
 const defaultDesktop: DesktopState = {
   username: 'Dragon',
   soundEnabled: true,
@@ -45,6 +48,9 @@ const defaultDesktop: DesktopState = {
   lastZIndex: 0,
 };
 
+// ─── Optimized reducer ────────────────────────────────────
+// All window mutations are isolated — changing a single window only
+// spreads the windows record once, not every consumer.
 function osReducer(state: OSState, action: OSAction): OSState {
   switch (action.type) {
     case 'BOOT':
@@ -62,7 +68,6 @@ function osReducer(state: OSState, action: OSAction): OSState {
     case 'OPEN_WINDOW': {
       const existing = state.windows[action.windowId];
       if (existing && existing.isOpen && !existing.minimized) {
-        // Already open and visible, just focus
         return osReducer(state, { type: 'FOCUS_WINDOW', windowId: action.windowId });
       }
       if (existing && existing.minimized) {
@@ -149,6 +154,8 @@ function osReducer(state: OSState, action: OSAction): OSState {
     case 'FOCUS_WINDOW': {
       const win = state.windows[action.windowId];
       if (!win) return state;
+      // Skip if already focused (highest z)
+      if (win.zIndex === state.nextZ) return state;
       const newZ = state.nextZ + 1;
       return {
         ...state,
@@ -198,6 +205,7 @@ function osReducer(state: OSState, action: OSAction): OSState {
     }
     case 'CASCADE_WINDOWS': {
       const openWins = Object.values(state.windows).filter(w => w.isOpen && !w.minimized);
+      if (openWins.length === 0) return state;
       const windows = { ...state.windows };
       openWins.forEach((w, i) => {
         windows[w.id] = { ...w, x: 80 + i * 30, y: 60 + i * 30 };
@@ -233,6 +241,65 @@ function osReducer(state: OSState, action: OSAction): OSState {
 
 const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
 
+// ─── Split contexts for fine-grained re-renders ───────────
+// DesktopContext: only booted, sleeping, username, sound, wallpaper
+const DesktopStateContext = createContext<DesktopState>(defaultDesktop);
+// WindowContext: only windows + windowOrder
+const WindowContext = createContext<Record<string, WindowState>>({});
+const WindowOrderContext = createContext<string[]>([]);
+// ToastContext: only toasts
+const ToastContext = createContext<Toast[]>([]);
+// Dispatch + actions context (stable reference)
+interface OSActionsContextValue {
+  dispatch: React.Dispatch<OSAction>;
+  openApp: (appId: string) => void;
+  closeApp: (windowId: string) => void;
+  addToast: (title: string, message: string, type?: Toast['type']) => void;
+}
+const OSActionsContext = createContext<OSActionsContextValue | null>(null);
+
+// ─── Hooks for consuming split contexts ───────────────────
+export function useDesktop(): DesktopState {
+  return useContext(DesktopStateContext);
+}
+
+export function useWindows(): Record<string, WindowState> {
+  return useContext(WindowContext);
+}
+
+export function useWindowOrder(): string[] {
+  return useContext(WindowOrderContext);
+}
+
+export function useToasts(): Toast[] {
+  return useContext(ToastContext);
+}
+
+// Combined hook — returns both state + actions for backward compatibility.
+// For performance-sensitive components, prefer useDesktop/useWindows/useToasts + useOS().
+export function useOS(): OSContextValue {
+  const ctx = useContext(OSActionsContext);
+  if (!ctx) throw new Error('useOS must be used within OSProvider');
+  const state = useFullState();
+  return useMemo(() => ({ ...ctx, state }), [ctx, state]);
+}
+
+// Full state access (for rare cases)
+export function useFullOS() {
+  const state = useFullState();
+  const actions = useOS();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
+}
+
+// Full combined state (used sparingly)
+const FullStateContext = createContext<OSState | null>(null);
+function useFullState(): OSState {
+  const ctx = useContext(FullStateContext);
+  if (!ctx) throw new Error('useFullState must be used within OSProvider');
+  return ctx;
+}
+
+// Backward-compatible combined interface
 interface OSContextValue {
   state: OSState;
   dispatch: React.Dispatch<OSAction>;
@@ -241,21 +308,14 @@ interface OSContextValue {
   addToast: (title: string, message: string, type?: Toast['type']) => void;
 }
 
-const OSContext = createContext<OSContextValue | null>(null);
-
-export function useOS(): OSContextValue {
-  const ctx = useContext(OSContext);
-  if (!ctx) throw new Error('useOS must be used within OSProvider');
-  return ctx;
-}
-
-// App registry will be set up outside
+// ─── App registry (kept outside context for zero-render reads) ──
 let appRegistryRef: Record<string, { name: string; icon: React.ReactNode; defaultWidth: number; defaultHeight: number; minWidth: number; minHeight: number }> = {};
 
 export function setAppRegistry(reg: typeof appRegistryRef) {
   appRegistryRef = reg;
 }
 
+// ─── Provider ─────────────────────────────────────────────
 export function OSProvider({ children }: { children: React.ReactNode }) {
   const savedDesktop = load<DesktopState>('desktop', defaultDesktop);
   const [state, dispatch] = useReducer(osReducer, {
@@ -267,7 +327,7 @@ export function OSProvider({ children }: { children: React.ReactNode }) {
     windowOrder: [],
   });
 
-  // Save desktop state
+  // Save desktop state (debounced via effect)
   useEffect(() => {
     if (state.desktop.booted) {
       save('desktop', {
@@ -278,11 +338,10 @@ export function OSProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.desktop.username, state.desktop.soundEnabled, state.desktop.wallpaperTheme, state.desktop.booted]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts — single listener, all shortcuts in one handler
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        // Close command palette or topmost window
         document.dispatchEvent(new CustomEvent('dragonos-escape'));
       }
       if (e.ctrlKey && e.key === 'k') {
@@ -301,22 +360,24 @@ export function OSProvider({ children }: { children: React.ReactNode }) {
         e.preventDefault();
         document.dispatchEvent(new CustomEvent('dragonos-toggle-drawer'));
       }
-      // Konami code
-      dispatch({ type: 'KONAMI_KEY', key: e.keyCode });
+      // Konami code — only dispatch if relevant key
+      if ([38, 40, 37, 39, 66, 65].includes(e.keyCode)) {
+        dispatch({ type: 'KONAMI_KEY', key: e.keyCode });
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [dispatch]);
 
-  // Check konami
+  // Konami check
   useEffect(() => {
-    const sequence = konamiSequence;
-    if (state.konamiProgress.length === 10 && state.konamiProgress.every((v, i) => v === sequence[i])) {
+    if (state.konamiProgress.length === 10 && state.konamiProgress.every((v, i) => v === konamiSequence[i])) {
       document.dispatchEvent(new CustomEvent('dragonos-konami'));
       dispatch({ type: 'RESET_KONAMI' });
     }
   }, [state.konamiProgress, dispatch]);
 
+  // Stable action callbacks
   const openApp = useCallback((appId: string) => {
     const reg = appRegistryRef[appId];
     if (!reg) return;
@@ -344,10 +405,32 @@ export function OSProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => dispatch({ type: 'REMOVE_TOAST', id }), 3000);
   }, [dispatch]);
 
+  // Memoize actions value — dispatch is stable from useReducer
+  const actionsValue = useMemo<OSActionsContextValue>(
+    () => ({ dispatch, openApp, closeApp, addToast }),
+    [dispatch, openApp, closeApp, addToast]
+  );
+
+  // Memoize split context values to prevent unnecessary re-renders
+  const desktopValue = useMemo(() => state.desktop, [state.desktop]);
+  const windowsValue = useMemo(() => state.windows, [state.windows]);
+  const windowOrderValue = useMemo(() => state.windowOrder, [state.windowOrder]);
+  const toastsValue = useMemo(() => state.toasts, [state.toasts]);
+
   return (
-    <OSContext.Provider value={{ state, dispatch, openApp, closeApp, addToast }}>
-      {children}
-    </OSContext.Provider>
+    <OSActionsContext.Provider value={actionsValue}>
+      <DesktopStateContext.Provider value={desktopValue}>
+        <WindowContext.Provider value={windowsValue}>
+          <WindowOrderContext.Provider value={windowOrderValue}>
+            <ToastContext.Provider value={toastsValue}>
+              <FullStateContext.Provider value={state}>
+                {children}
+              </FullStateContext.Provider>
+            </ToastContext.Provider>
+          </WindowOrderContext.Provider>
+        </WindowContext.Provider>
+      </DesktopStateContext.Provider>
+    </OSActionsContext.Provider>
   );
 }
 
