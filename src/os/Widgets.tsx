@@ -1,9 +1,9 @@
 // DragonOS Desktop Widgets - Customizable, draggable glass-morphism widgets
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useOS } from './context';
 import { usePersist, save, load } from './persist';
 import { Clock, Calendar, CheckSquare, Target, Timer, Quote, GripVertical, X, Plus } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 // ─── Widget Types ─────────────────────────────────────────
 export type WidgetType = 'clock' | 'date' | 'todo' | 'habits' | 'pomodoro' | 'quote';
@@ -17,12 +17,12 @@ export interface WidgetConfig {
 }
 
 const defaultWidgets: WidgetConfig[] = [
-  { id: 'w-clock', type: 'clock', x: -1, y: 20, visible: true },
-  { id: 'w-date', type: 'date', x: -1, y: 180, visible: true },
-  { id: 'w-quote', type: 'quote', x: -1, y: 310, visible: true },
+  { id: 'w-clock', type: 'clock', x: 20, y: 20, visible: true },
+  { id: 'w-date', type: 'date', x: 20, y: 180, visible: true },
+  { id: 'w-quote', type: 'quote', x: 20, y: 280, visible: true },
 ];
 
-const widgetMeta: Record<WidgetType, { label: string; icon: React.ReactNode; defaultW: number; defaultH: number }> = {
+const widgetMeta: Record<WidgetType, { label: string; icon: ReactNode; defaultW: number; defaultH: number }> = {
   clock: { label: 'Clock', icon: <Clock size={14} />, defaultW: 200, defaultH: 140 },
   date: { label: 'Date', icon: <Calendar size={14} />, defaultW: 200, defaultH: 80 },
   todo: { label: 'Quick Todo', icon: <CheckSquare size={14} />, defaultW: 220, defaultH: 200 },
@@ -42,16 +42,37 @@ const quotes = [
   { text: "The dragon who sleeps still dreams of fire.", author: "DragonOS" },
 ];
 
+// ─── Throttle helper for drag ─────────────────────────────
+function useThrottledCallback(fn: (x: number, y: number) => void, ms: number) {
+  const lastRun = useRef(0);
+  const rafId = useRef(0);
+  return useCallback((x: number, y: number) => {
+    const now = Date.now();
+    if (now - lastRun.current >= ms) {
+      lastRun.current = now;
+      fn(x, y);
+    } else {
+      cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        lastRun.current = Date.now();
+        fn(x, y);
+      });
+    }
+  }, [fn, ms]);
+}
+
 // ─── Draggable Wrapper ────────────────────────────────────
 function DraggableWidget({ config, onMove, onRemove, children }: {
   config: WidgetConfig;
   onMove: (x: number, y: number) => void;
   onRemove: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const dragRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const offset = useRef({ x: 0, y: 0 });
+
+  const throttledMove = useThrottledCallback((x: number, y: number) => onMove(x, y), 16);
 
   const onDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -67,7 +88,7 @@ function DraggableWidget({ config, onMove, onRemove, children }: {
     const onMove2 = (e: MouseEvent) => {
       const nx = e.clientX - offset.current.x;
       const ny = e.clientY - offset.current.y;
-      onMove(nx, ny);
+      throttledMove(nx, ny);
     };
     const onUp = () => setDragging(false);
     window.addEventListener('mousemove', onMove2);
@@ -76,7 +97,7 @@ function DraggableWidget({ config, onMove, onRemove, children }: {
       window.removeEventListener('mousemove', onMove2);
       window.removeEventListener('mouseup', onUp);
     };
-  }, [dragging, onMove]);
+  }, [dragging, throttledMove]);
 
   return (
     <div ref={dragRef}
@@ -133,39 +154,32 @@ function ClockWidget() {
   const h12 = h % 12 || 12;
   const ampm = h < 12 ? 'AM' : 'PM';
 
-  // Analog clock hands
   const secAngle = s * 6;
   const minAngle = m * 6 + s * 0.1;
   const hourAngle = h12 * 30 + m * 0.5;
 
   return (
     <div className="flex items-center gap-3">
-      {/* Mini analog */}
       <svg viewBox="0 0 60 60" className="w-14 h-14 flex-shrink-0">
         <circle cx="30" cy="30" r="28" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
-        {/* Hour markers */}
-        {[...Array(12)].map((_, i) => {
+        {Array.from({ length: 12 }, (_, i) => {
           const a = (i * 30 - 90) * Math.PI / 180;
           return <circle key={i} cx={30 + 24 * Math.cos(a)} cy={30 + 24 * Math.sin(a)} r="1" fill="rgba(255,255,255,0.2)" />;
         })}
-        {/* Hour hand */}
         <line x1="30" y1="30" x2={30 + 14 * Math.cos((hourAngle - 90) * Math.PI / 180)}
           y2={30 + 14 * Math.sin((hourAngle - 90) * Math.PI / 180)}
           stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" />
-        {/* Minute hand */}
         <line x1="30" y1="30" x2={30 + 20 * Math.cos((minAngle - 90) * Math.PI / 180)}
           y2={30 + 20 * Math.sin((minAngle - 90) * Math.PI / 180)}
           stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
-        {/* Second hand */}
         <line x1="30" y1="30" x2={30 + 22 * Math.cos((secAngle - 90) * Math.PI / 180)}
           y2={30 + 22 * Math.sin((secAngle - 90) * Math.PI / 180)}
           stroke="#dc2626" strokeWidth="0.8" strokeLinecap="round" />
         <circle cx="30" cy="30" r="2" fill="#dc2626" />
       </svg>
-      {/* Digital */}
       <div>
         <p className="font-mono text-xl text-white/80 tracking-wider">
-          {time.getHours().toString().padStart(2, '0')}<span className="animate-pulse text-[#dc2626]">:</span>{m.toString().padStart(2, '0')}
+          {h.toString().padStart(2, '0')}<span className="animate-pulse text-[#dc2626]">:</span>{m.toString().padStart(2, '0')}
         </p>
         <p className="text-[10px] text-white/30 font-inter mt-0.5">{s.toString().padStart(2, '0')}s {ampm}</p>
       </div>
@@ -180,15 +194,17 @@ function DateWidget() {
     return () => clearInterval(iv);
   }, []);
 
-  const day = now.getDate();
-  const month = now.toLocaleDateString('en-US', { month: 'long' });
-  const year = now.getFullYear();
-  const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const formatted = useMemo(() => ({
+    weekday: now.toLocaleDateString('en-US', { weekday: 'long' }),
+    month: now.toLocaleDateString('en-US', { month: 'long' }),
+    day: now.getDate(),
+    year: now.getFullYear(),
+  }), [now]);
 
   return (
     <div className="text-center">
-      <p className="font-display text-2xl text-white/85 tracking-wide">{weekday}</p>
-      <p className="text-xs text-white/40 font-inter mt-1">{month} {day}, {year}</p>
+      <p className="font-display text-2xl text-white/85 tracking-wide">{formatted.weekday}</p>
+      <p className="text-xs text-white/40 font-inter mt-1">{formatted.month} {formatted.day}, {formatted.year}</p>
     </div>
   );
 }
@@ -200,22 +216,24 @@ function TodoWidget() {
   ]);
   const [newTodo, setNewTodo] = useState('');
 
-  const add = () => {
+  const add = useCallback(() => {
     if (!newTodo.trim()) return;
-    setTodos([...todos, { id: Date.now().toString(), text: newTodo.trim(), done: false }]);
+    setTodos(prev => [...prev, { id: Date.now().toString(), text: newTodo.trim(), done: false }]);
     setNewTodo('');
-  };
+  }, [newTodo, setTodos]);
 
-  const toggle = (id: string) => {
-    setTodos(todos.map(t => t.id === id ? { ...t, done: !t.done } : t));
-  };
+  const toggle = useCallback((id: string) => {
+    setTodos(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  }, [setTodos]);
 
-  const remove = (id: string) => {
-    setTodos(todos.filter(t => t.id !== id));
-  };
+  const remove = useCallback((id: string) => {
+    setTodos(prev => prev.filter(t => t.id !== id));
+  }, [setTodos]);
 
-  const done = todos.filter(t => t.done).length;
-  const total = todos.length;
+  const { done, total } = useMemo(() => ({
+    done: todos.filter(t => t.done).length,
+    total: todos.length,
+  }), [todos]);
 
   return (
     <div>
@@ -223,7 +241,6 @@ function TodoWidget() {
         <span className="text-[10px] text-white/30 font-inter">Quick Todo</span>
         <span className="text-[10px] text-[#dc2626]/60 font-mono">{done}/{total}</span>
       </div>
-      {/* Progress bar */}
       <div className="h-1 rounded-full bg-white/5 mb-2.5 overflow-hidden">
         <div className="h-full rounded-full bg-[#dc2626]/60 transition-all duration-500"
           style={{ width: total > 0 ? `${(done / total) * 100}%` : '0%' }} />
@@ -267,24 +284,25 @@ function HabitsWidget() {
     { name: 'Meditate', completions: [] },
   ]);
 
-  const today = new Date().toISOString().split('T')[0];
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  const weekDates = useMemo(() => {
+  const { today, weekDates } = useMemo(() => {
     const now = new Date();
-    const dayOfWeek = (now.getDay() + 6) % 7; // Monday = 0
-    return Array.from({ length: 7 }, (_, i) => {
+    const todayStr = now.toISOString().split('T')[0];
+    const dayOfWeek = (now.getDay() + 6) % 7;
+    const dates = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(now);
       d.setDate(d.getDate() - dayOfWeek + i);
       return d.toISOString().split('T')[0];
     });
+    return { today: todayStr, weekDates: dates };
   }, []);
+
+  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-[10px] text-white/30 font-inter">This Week</span>
       </div>
-      {/* Day headers */}
       <div className="flex gap-1 mb-1.5">
         <div className="w-14" />
         {days.map((d, i) => (
@@ -294,7 +312,6 @@ function HabitsWidget() {
           </div>
         ))}
       </div>
-      {/* Habits grid */}
       {habits.map((h, hi) => (
         <div key={hi} className="flex items-center gap-1 mb-1">
           <span className="w-14 text-[10px] text-white/40 font-inter truncate">{h.name}</span>
@@ -319,6 +336,10 @@ function PomodoroWidget() {
   const [running, setRunning] = useState(false);
   const [sessions, setSessions] = useState(0);
   const [isBreak, setIsBreak] = useState(false);
+  const isBreakRef = useRef(false);
+
+  // Keep ref in sync
+  useEffect(() => { isBreakRef.current = isBreak; }, [isBreak]);
 
   useEffect(() => {
     if (!running) return;
@@ -327,10 +348,10 @@ function PomodoroWidget() {
         if (prev <= 1) {
           clearInterval(iv);
           setRunning(false);
-          if (!isBreak) {
+          if (!isBreakRef.current) {
             setSessions(s => s + 1);
             setIsBreak(true);
-            return 5 * 60; // 5 min break
+            return 5 * 60;
           } else {
             setIsBreak(false);
             return 25 * 60;
@@ -340,13 +361,12 @@ function PomodoroWidget() {
       });
     }, 1000);
     return () => clearInterval(iv);
-  }, [running, isBreak]);
+  }, [running]);
 
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  const progress = isBreak
-    ? ((5 * 60 - seconds) / (5 * 60)) * 100
-    : ((25 * 60 - seconds) / (25 * 60)) * 100;
+  const totalSeconds = isBreak ? 5 * 60 : 25 * 60;
+  const progress = ((totalSeconds - seconds) / totalSeconds) * 100;
 
   return (
     <div className="text-center">
@@ -356,7 +376,6 @@ function PomodoroWidget() {
       <p className="font-mono text-2xl text-white/80 tracking-wider">
         {mins.toString().padStart(2, '0')}<span className="animate-pulse text-[#dc2626]">:</span>{secs.toString().padStart(2, '0')}
       </p>
-      {/* Progress ring */}
       <div className="flex justify-center my-2">
         <svg viewBox="0 0 40 40" className="w-10 h-10">
           <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
@@ -366,7 +385,7 @@ function PomodoroWidget() {
         </svg>
       </div>
       <div className="flex items-center justify-center gap-2">
-        <button onClick={() => setRunning(!running)}
+        <button onClick={() => setRunning(r => !r)}
           className="text-[10px] px-3 py-1 rounded-full bg-[#dc2626]/15 text-[#dc2626] hover:bg-[#dc2626]/25 transition-colors font-inter">
           {running ? 'Pause' : 'Start'}
         </button>
@@ -393,7 +412,7 @@ function QuoteWidget() {
   return (
     <div className="text-center">
       <Quote size={16} className="text-[#dc2626]/30 mx-auto mb-2" />
-      <p className="text-[11px] text-white/50 font-inter leading-relaxed italic">"{q.text}"</p>
+      <p className="text-[11px] text-white/50 font-inter leading-relaxed italic">&ldquo;{q.text}&rdquo;</p>
       <p className="text-[9px] text-white/25 font-inter mt-2">— {q.author}</p>
     </div>
   );
@@ -469,14 +488,13 @@ export default function Widgets() {
   const visibleWidgets = useMemo(() => widgets.filter(w => w.visible), [widgets]);
   const existingTypes = useMemo(() => visibleWidgets.map(w => w.type), [visibleWidgets]);
 
-  // Listen for toggle-widgets event from context menu
   useEffect(() => {
     const handler = () => setShowAdd(prev => !prev);
     document.addEventListener('dragonos-toggle-widgets', handler as EventListener);
     return () => document.removeEventListener('dragonos-toggle-widgets', handler as EventListener);
   }, []);
 
-  const renderContent = (type: WidgetType) => {
+  const renderContent = useCallback((type: WidgetType) => {
     switch (type) {
       case 'clock': return <ClockWidget />;
       case 'date': return <DateWidget />;
@@ -485,13 +503,13 @@ export default function Widgets() {
       case 'pomodoro': return <PomodoroWidget />;
       case 'quote': return <QuoteWidget />;
     }
-  };
+  }, []);
 
   return (
     <>
       {/* Desktop widget area - right side */}
-      <div className="fixed right-4 top-4 z-[5] pointer-events-none">
-        <div className="flex flex-col gap-0 pointer-events-auto">
+      <div className="fixed right-4 top-4 z-[5]">
+        <div className="flex flex-col gap-0">
           {visibleWidgets.map(w => (
             <DraggableWidget key={w.id} config={w}
               onMove={(x, y) => updatePos(w.id, x, y)}
@@ -502,8 +520,8 @@ export default function Widgets() {
         </div>
       </div>
 
-      {/* Add widget button (bottom-right, near dock) */}
-      <button onClick={() => setShowAdd(!showAdd)}
+      {/* Add widget button */}
+      <button onClick={() => setShowAdd(prev => !prev)}
         className="fixed bottom-20 right-4 z-[45] w-8 h-8 rounded-full bg-white/[0.04] border border-white/8
           flex items-center justify-center text-white/30 hover:text-[#dc2626] hover:bg-[#dc2626]/10
           hover:border-[#dc2626]/15 transition-all duration-200"
@@ -511,7 +529,6 @@ export default function Widgets() {
         <Plus size={14} />
       </button>
 
-      {/* Add panel */}
       {showAdd && <AddWidgetPanel onAdd={addWidget} onClose={() => setShowAdd(false)} existing={existingTypes} />}
     </>
   );

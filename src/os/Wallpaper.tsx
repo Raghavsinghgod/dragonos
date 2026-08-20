@@ -1,5 +1,5 @@
 // DragonOS Wallpaper - Premium coiled Chinese dragon on black leather
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface Star { x: number; y: number; size: number; delay: number; duration: number; }

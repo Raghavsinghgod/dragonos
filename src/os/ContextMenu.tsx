@@ -25,10 +25,12 @@ export default function ContextMenu({ onOpenSettings, onOpenLaunchpad }: { onOpe
   }, []);
 
   useEffect(() => {
+    const handleClick = () => setOpen(false);
     window.addEventListener('contextmenu', handleContext);
-    window.addEventListener('click', () => setOpen(false));
+    window.addEventListener('click', handleClick);
     return () => {
       window.removeEventListener('contextmenu', handleContext);
+      window.removeEventListener('click', handleClick);
     };
   }, [handleContext]);
 

@@ -169,33 +169,35 @@ function WindowMockup({ title, children, className = '', style = {} }: {
 }
 
 // ─── Terminal Mockup ──────────────────────────────────────
+const terminalLines = [
+  { prompt: '~', cmd: 'dragonos --status', color: 'text-[#dc2626]' },
+  { output: '✓ 28 apps loaded', color: 'text-[#22c55e]' },
+  { output: '✓ Window manager active', color: 'text-[#22c55e]' },
+  { output: '✓ Sound engine online', color: 'text-[#22c55e]' },
+  { output: '✓ Dragon wallpaper rendering', color: 'text-[#22c55e]' },
+  { prompt: '~', cmd: 'open terminal', color: 'text-[#dc2626]' },
+  { output: 'Terminal launched — Welcome to DragonOS!', color: 'text-white/60' },
+];
+
 function TerminalMockup() {
   const [lineIdx, setLineIdx] = useState(-1);
-  const lines = [
-    { prompt: '~', cmd: 'dragonos --status', color: 'text-[#dc2626]' },
-    { output: '✓ 28 apps loaded', color: 'text-[#22c55e]' },
-    { output: '✓ Window manager active', color: 'text-[#22c55e]' },
-    { output: '✓ Sound engine online', color: 'text-[#22c55e]' },
-    { output: '✓ Dragon wallpaper rendering', color: 'text-[#22c55e]' },
-    { prompt: '~', cmd: 'open terminal', color: 'text-[#dc2626]' },
-    { output: 'Terminal launched — Welcome to DragonOS!', color: 'text-white/60' },
-  ];
+  const started = useRef(false);
 
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting && lineIdx === -1) {
+      if (e.isIntersecting && !started.current) {
+        started.current = true;
         let i = 0;
         const iv = setInterval(() => {
           setLineIdx(i);
           i++;
-          if (i >= lines.length) clearInterval(iv);
+          if (i >= terminalLines.length) clearInterval(iv);
         }, 400);
       }
     }, { threshold: 0.3 });
     const el = document.getElementById('terminal-mock');
     if (el) obs.observe(el);
     return () => obs.disconnect();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -208,7 +210,7 @@ function TerminalMockup() {
         <span className="ml-2 text-[9px] text-white/20 font-inter">Terminal</span>
       </div>
       <div className="p-3 min-h-[180px]">
-        {lines.map((l, i) => (
+        {terminalLines.map((l, i) => (
           <div key={i} className={`${i <= lineIdx ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
             {'output' in l ? (
               <span className={l.color}>{l.output}</span>
@@ -217,7 +219,7 @@ function TerminalMockup() {
             )}
           </div>
         ))}
-        {lineIdx >= 0 && lineIdx < lines.length && (
+        {lineIdx >= 0 && lineIdx < terminalLines.length && (
           <span className="inline-block w-2 h-4 bg-[#dc2626] animate-terminalBlink ml-0.5" />
         )}
       </div>
