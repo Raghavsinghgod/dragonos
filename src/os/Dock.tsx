@@ -1,29 +1,31 @@
 // DragonOS Dock - Apple-style with magnification, running indicators, tooltips
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS } from './context';
 import { sounds } from './sounds';
+import { appIcons } from './icons';
+import type { ReactNode } from 'react';
 
 interface DockItem {
   id: string;
   name: string;
-  icon: string;
+  icon: ReactNode;
   order: number;
 }
 
 const dockItems: DockItem[] = [
-  { id: 'dashboard', name: 'Dashboard', icon: '📊', order: 0 },
-  { id: 'notepad', name: 'Notepad', icon: '📝', order: 1 },
-  { id: 'calendar', name: 'Calendar', icon: '📅', order: 2 },
-  { id: 'todo', name: 'Todo', icon: '✅', order: 3 },
-  { id: 'terminal', name: 'Terminal', icon: '💻', order: 4 },
-  { id: 'calculator', name: 'Calculator', icon: '🔢', order: 5 },
-  { id: 'clock', name: 'Clock', icon: '🕐', order: 6 },
-  { id: 'settings', name: 'Settings', icon: '⚙️', order: 7 },
+  { id: 'dashboard', name: 'Dashboard', icon: appIcons.dashboard, order: 0 },
+  { id: 'notepad', name: 'Notepad', icon: appIcons.notepad, order: 1 },
+  { id: 'calendar', name: 'Calendar', icon: appIcons.calendar, order: 2 },
+  { id: 'todo', name: 'Todo', icon: appIcons.todo, order: 3 },
+  { id: 'terminal', name: 'Terminal', icon: appIcons.terminal, order: 4 },
+  { id: 'calculator', name: 'Calculator', icon: appIcons.calculator, order: 5 },
+  { id: 'clock', name: 'Clock', icon: appIcons.clock, order: 6 },
+  { id: 'settings', name: 'Settings', icon: appIcons.settings, order: 7 },
 ];
 
 export default function Dock() {
-  const { state, openApp, dispatch } = useOS();
+  const { state, openApp } = useOS();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltip, setTooltip] = useState<{ name: string; x: number } | null>(null);
   const dockRef = useRef<HTMLDivElement>(null);
@@ -92,10 +94,10 @@ export default function Dock() {
                 y: isHovered ? -8 : 0,
               }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              className="relative flex flex-col items-center group"
+              className="relative flex flex-col items-center group text-[#dc2626]"
             >
               <motion.span
-                className="text-2xl md:text-3xl leading-none select-none"
+                className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10"
                 animate={{
                   filter: isHovered ? 'drop-shadow(0 0 8px rgba(220,38,38,0.5))' : 'none',
                 }}

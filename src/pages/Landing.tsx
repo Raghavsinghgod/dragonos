@@ -2,6 +2,38 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router';
 import { useEffect, useRef, useState } from 'react';
+import {
+  AppWindow,
+  Globe,
+  Layers,
+  Keyboard,
+  Volume2,
+  Zap,
+  LayoutDashboard,
+  FileText,
+  Calendar,
+  CheckSquare,
+  Terminal,
+  Calculator,
+  Timer,
+  Settings,
+  BookOpen,
+  DollarSign,
+  Smile,
+  Lock,
+  Palette,
+  Type,
+  Trophy,
+  Activity,
+  Headphones,
+  Languages,
+  CloudSun,
+  ClipboardList,
+  FileCode,
+  Target,
+  RefreshCw,
+  Columns3,
+} from 'lucide-react';
 
 interface Star {
   x: number; y: number; size: number; delay: number; duration: number;
@@ -31,15 +63,43 @@ function generateEmbers(count: number): Ember[] {
 }
 
 const features = [
-  { icon: '🪟', title: 'Floating Windows', desc: 'Drag, resize, snap, and stack — a full window manager in the browser.' },
-  { icon: '🐉', title: 'Dragon Wallpaper', desc: 'Animated SVG dragon with parallax, twinkling stars, and rising embers.' },
-  { icon: '💻', title: '28 Apps', desc: 'Productivity, creativity, and focus tools — all running inside your browser OS.' },
-  { icon: '⌨️', title: 'Keyboard Shortcuts', desc: 'Ctrl+K command palette, Alt+1-9 quick launch, and hidden easter eggs.' },
-  { icon: '🔊', title: 'Sound Engine', desc: 'Every interaction has a sound — generated live via the WebAudio API.' },
-  { icon: '🚀', title: 'Instant Boot', desc: 'Animated boot sequence with dragon logo and spring-loaded animations.' },
+  { icon: <AppWindow size={22} className="text-[#dc2626]" />, title: 'Floating Windows', desc: 'Drag, resize, snap, and stack — a full window manager in the browser.' },
+  { icon: <Globe size={22} className="text-[#dc2626]" />, title: 'Dragon Wallpaper', desc: 'Animated SVG dragon with parallax, twinkling stars, and rising embers.' },
+  { icon: <Layers size={22} className="text-[#dc2626]" />, title: '28 Apps', desc: 'Productivity, creativity, and focus tools — all running inside your browser OS.' },
+  { icon: <Keyboard size={22} className="text-[#dc2626]" />, title: 'Keyboard Shortcuts', desc: 'Ctrl+K command palette, Alt+1-9 quick launch, and hidden easter eggs.' },
+  { icon: <Volume2 size={22} className="text-[#dc2626]" />, title: 'Sound Engine', desc: 'Every interaction has a sound — generated live via the WebAudio API.' },
+  { icon: <Zap size={22} className="text-[#dc2626]" />, title: 'Instant Boot', desc: 'Animated boot sequence with dragon logo and spring-loaded animations.' },
 ];
 
-const appIcons = ['📊', '📝', '📅', '✅', '💻', '🔢', '🕐', '🎯', '🔄', '📋', '🍅', '⚙️', '📔', '💰', '😊', '🔒', '🎨', '🃏', '⌨️', '🏆', '📈', '🎧', '🌐', '🌍', '🌤️', '📋', '⚡', '📄'];
+const appIconList = [
+  { Icon: LayoutDashboard, name: 'Dashboard' },
+  { Icon: FileText, name: 'Notepad' },
+  { Icon: Calendar, name: 'Calendar' },
+  { Icon: CheckSquare, name: 'Todo' },
+  { Icon: Terminal, name: 'Terminal' },
+  { Icon: Calculator, name: 'Calculator' },
+  { Icon: Timer, name: 'Pomodoro' },
+  { Icon: Target, name: 'Goals' },
+  { Icon: RefreshCw, name: 'Habits' },
+  { Icon: Columns3, name: 'Kanban' },
+  { Icon: Settings, name: 'Settings' },
+  { Icon: BookOpen, name: 'Journal' },
+  { Icon: DollarSign, name: 'Expenses' },
+  { Icon: Smile, name: 'Mood' },
+  { Icon: Lock, name: 'Vault' },
+  { Icon: Palette, name: 'Doodle' },
+  { Icon: Layers, name: 'Flashcards' },
+  { Icon: Type, name: 'Typing Test' },
+  { Icon: Trophy, name: 'Achievements' },
+  { Icon: Activity, name: 'Sys Monitor' },
+  { Icon: Headphones, name: 'Focus Sounds' },
+  { Icon: Globe, name: 'Browser' },
+  { Icon: Languages, name: 'Translator' },
+  { Icon: CloudSun, name: 'Weather' },
+  { Icon: ClipboardList, name: 'Clipboard' },
+  { Icon: Zap, name: 'Quick Notes' },
+  { Icon: FileCode, name: 'Markdown' },
+];
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -111,14 +171,31 @@ export default function Landing() {
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-5">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🐉</span>
+          {/* Small dragon icon SVG */}
+          <svg viewBox="0 0 32 32" className="w-7 h-7">
+            <defs>
+              <radialGradient id="navGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#dc2626" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#dc2626" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <circle cx="16" cy="16" r="14" fill="url(#navGlow)" />
+            <g fill="#dc2626">
+              <ellipse cx="16" cy="12" rx="6" ry="5" />
+              <circle cx="14" cy="11" r="1.2" fill="#050508" />
+              <circle cx="18" cy="11" r="1.2" fill="#050508" />
+              <path d="M11 7 L9 2 L12 5Z" />
+              <path d="M21 7 L23 2 L20 5Z" />
+              <path d="M12 16 Q10 20 11 24 Q13 27 16 28 Q19 27 21 24 Q22 20 20 16Z" />
+            </g>
+          </svg>
           <span className="font-display text-lg tracking-wide text-white/90">DragonOS</span>
         </div>
         <button
-          onClick={() => navigate('/auth')}
+          onClick={() => navigate('/dashboard')}
           className="px-5 py-2 rounded-full text-sm font-inter text-white/80 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
         >
-          Sign In
+          Open Desktop
         </button>
       </nav>
 
@@ -207,7 +284,7 @@ export default function Landing() {
           className="mt-8 flex gap-4"
         >
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/dashboard')}
             className="px-8 py-3 rounded-full bg-[#dc2626] text-white font-inter font-medium text-sm hover:bg-[#dc2626]/80 transition-all duration-300 shadow-lg shadow-[#dc2626]/20 hover:shadow-[#dc2626]/40"
           >
             Launch DragonOS
@@ -239,16 +316,17 @@ export default function Landing() {
               <span className="ml-3 text-[10px] text-white/20 font-inter">DragonOS Desktop</span>
             </div>
             <div className="grid grid-cols-7 md:grid-cols-10 gap-3">
-              {appIcons.map((icon, i) => (
+              {appIconList.map(({ Icon, name }, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, scale: 0.5 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3, delay: i * 0.03 }}
                   viewport={{ once: true }}
-                  className="aspect-square rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-xl hover:bg-white/[0.06] hover:border-white/10 transition-all duration-200 cursor-default"
+                  title={name}
+                  className="aspect-square rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/40 hover:bg-white/[0.06] hover:border-[#dc2626]/10 hover:text-[#dc2626] transition-all duration-200 cursor-default"
                 >
-                  {icon}
+                  <Icon size={18} />
                 </motion.div>
               ))}
             </div>
@@ -280,7 +358,9 @@ export default function Landing() {
               className="p-5 rounded-xl border border-white/5 hover:border-[#dc2626]/10 transition-all duration-300 group"
               style={{ background: 'rgba(12,12,18,0.4)' }}
             >
-              <span className="text-2xl">{f.icon}</span>
+              <div className="w-10 h-10 rounded-lg bg-[#dc2626]/10 flex items-center justify-center">
+                {f.icon}
+              </div>
               <h3 className="mt-3 text-sm text-white/80 font-display tracking-wide">{f.title}</h3>
               <p className="mt-2 text-xs text-white/30 font-inter leading-relaxed">{f.desc}</p>
             </motion.div>
@@ -332,11 +412,29 @@ export default function Landing() {
           transition={{ duration: 0.6 }}
           viewport={{ once: true, margin: '-100px' }}
         >
-          <p className="text-3xl mb-4">🐉</p>
+          <div className="flex justify-center mb-4">
+            <svg viewBox="0 0 32 32" className="w-10 h-10">
+              <defs>
+                <radialGradient id="ctaGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#dc2626" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#dc2626" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              <circle cx="16" cy="16" r="14" fill="url(#ctaGlow)" />
+              <g fill="#dc2626">
+                <ellipse cx="16" cy="12" rx="6" ry="5" />
+                <circle cx="14" cy="11" r="1.2" fill="#050508" />
+                <circle cx="18" cy="11" r="1.2" fill="#050508" />
+                <path d="M11 7 L9 2 L12 5Z" />
+                <path d="M21 7 L23 2 L20 5Z" />
+                <path d="M12 16 Q10 20 11 24 Q13 27 16 28 Q19 27 21 24 Q22 20 20 16Z" />
+              </g>
+            </svg>
+          </div>
           <h2 className="font-display text-2xl md:text-3xl text-white/90 tracking-wide">Ready to Boot?</h2>
           <p className="mt-3 text-sm text-white/30 font-inter">Your desktop is one click away.</p>
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/dashboard')}
             className="mt-8 px-10 py-3.5 rounded-full bg-[#dc2626] text-white font-inter font-medium text-sm hover:bg-[#dc2626]/80 transition-all duration-300 shadow-lg shadow-[#dc2626]/20 hover:shadow-[#dc2626]/40"
           >
             Enter DragonOS

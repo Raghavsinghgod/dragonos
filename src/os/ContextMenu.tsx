@@ -3,10 +3,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS } from './context';
 import { sounds } from './sounds';
+import { Columns3, Monitor, Settings, Rocket, Volume2, VolumeX, Palette, Moon } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface MenuItem {
   label: string;
-  icon: string;
+  icon: ReactNode;
   action: () => void;
   divider?: boolean;
 }
@@ -31,20 +33,20 @@ export default function ContextMenu({ onOpenSettings, onOpenLaunchpad }: { onOpe
   }, [handleContext]);
 
   const menuItems: MenuItem[] = [
-    { label: 'Cascade Windows', icon: '🪟', action: () => { dispatch({ type: 'CASCADE_WINDOWS' }); sounds.snap(); } },
-    { label: 'Show Desktop', icon: '🖥️', action: () => { dispatch({ type: 'SHOW_DESKTOP' }); sounds.minimize(); } },
-    { label: 'Settings', icon: '⚙️', action: () => { onOpenSettings(); sounds.click(); } },
-    { label: 'Launchpad', icon: '🚀', action: () => { onOpenLaunchpad(); sounds.click(); } },
-    { label: '', icon: '', action: () => {}, divider: true },
-    { label: 'Toggle Sound', icon: state.desktop.soundEnabled ? '🔊' : '🔇', action: () => { dispatch({ type: 'TOGGLE_SOUND' }); sounds.click(); } },
-    { label: 'Cycle Wallpaper', icon: '🎨', action: () => {
+    { label: 'Cascade Windows', icon: <Columns3 size={14} />, action: () => { dispatch({ type: 'CASCADE_WINDOWS' }); sounds.snap(); } },
+    { label: 'Show Desktop', icon: <Monitor size={14} />, action: () => { dispatch({ type: 'SHOW_DESKTOP' }); sounds.minimize(); } },
+    { label: 'Settings', icon: <Settings size={14} />, action: () => { onOpenSettings(); sounds.click(); } },
+    { label: 'Launchpad', icon: <Rocket size={14} />, action: () => { onOpenLaunchpad(); sounds.click(); } },
+    { label: '', icon: null, action: () => {}, divider: true },
+    { label: 'Toggle Sound', icon: state.desktop.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />, action: () => { dispatch({ type: 'TOGGLE_SOUND' }); sounds.click(); } },
+    { label: 'Cycle Wallpaper', icon: <Palette size={14} />, action: () => {
       const themes = ['dragon', 'minimal', 'neon'];
       const next = themes[(themes.indexOf(state.desktop.wallpaperTheme) + 1) % themes.length];
       dispatch({ type: 'SET_WALLPAPER', theme: next });
       sounds.snap();
     }},
-    { label: '', icon: '', action: () => {}, divider: true },
-    { label: 'Sleep', icon: '😴', action: () => { dispatch({ type: 'SLEEP' }); sounds.minimize(); } },
+    { label: '', icon: null, action: () => {}, divider: true },
+    { label: 'Sleep', icon: <Moon size={14} />, action: () => { dispatch({ type: 'SLEEP' }); sounds.minimize(); } },
   ];
 
   if (!open) return null;
@@ -74,7 +76,7 @@ export default function ContextMenu({ onOpenSettings, onOpenLaunchpad }: { onOpe
             onClick={() => { item.action(); setOpen(false); }}
             className="w-full flex items-center gap-3 px-4 py-2 text-xs text-white/70 hover:bg-white/5 hover:text-white transition-colors font-inter"
           >
-            <span className="text-sm w-5 text-center">{item.icon}</span>
+            <span className="text-white/40 w-5 flex items-center justify-center">{item.icon}</span>
             {item.label}
           </button>
         )

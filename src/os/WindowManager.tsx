@@ -158,7 +158,10 @@ function WindowFrame({ win }: { win: WindowState }) {
           <button onClick={handleMinimize} className="w-3 h-3 rounded-full bg-[#febc2e] hover:bg-[#febc2e]/80 transition-colors" />
           <button onClick={handleMaximize} className="w-3 h-3 rounded-full bg-[#28c840] hover:bg-[#28c840]/80 transition-colors" />
         </div>
-        <span className="text-xs text-white/50 font-inter truncate">{win.title}</span>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {win.icon && <span className="text-white/50 flex-shrink-0 [&_svg]:w-3.5 [&_svg]:h-3.5">{win.icon}</span>}
+          <span className="text-xs text-white/50 font-inter truncate">{win.title}</span>
+        </div>
       </div>
 
       {/* Content */}

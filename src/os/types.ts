@@ -1,9 +1,11 @@
 // DragonOS Type Definitions
+import type { ReactNode } from 'react';
+
 export interface WindowState {
   id: string;
   appId: string;
   title: string;
-  icon: string;
+  icon: ReactNode;
   x: number;
   y: number;
   width: number;
@@ -20,7 +22,7 @@ export interface WindowState {
 export interface AppDefinition {
   id: string;
   name: string;
-  icon: string;
+  icon: ReactNode;
   defaultWidth: number;
   defaultHeight: number;
   minWidth: number;

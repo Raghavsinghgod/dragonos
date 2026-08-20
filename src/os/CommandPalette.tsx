@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useOS } from './context';
 import { sounds } from './sounds';
 import { allApps } from './StartMenu';
+import { Search } from './icons';
 
 export default function CommandPalette() {
-  const { openApp, dispatch } = useOS();
+  const { openApp } = useOS();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +75,7 @@ export default function CommandPalette() {
           >
             {/* Input */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
-              <span className="text-white/30 text-sm">🔍</span>
+              <span className="text-white/30"><Search size={16} /></span>
               <input
                 ref={inputRef}
                 value={query}
@@ -91,9 +92,9 @@ export default function CommandPalette() {
                 <button
                   key={app.id}
                   onClick={() => handleSelect(app.id)}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors text-[#dc2626]"
                 >
-                  <span className="text-xl">{app.icon}</span>
+                  {app.icon}
                   <span className="text-sm text-white/70 font-inter">{app.name}</span>
                   <span className="ml-auto text-[10px] text-white/20 font-inter">{app.category}</span>
                 </button>

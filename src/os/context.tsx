@@ -19,7 +19,7 @@ type OSAction =
   | { type: 'SET_USERNAME'; name: string }
   | { type: 'TOGGLE_SOUND' }
   | { type: 'SET_WALLPAPER'; theme: string }
-  | { type: 'OPEN_WINDOW'; windowId: string; appId: string; title: string; icon: string; width: number; height: number; minWidth: number; minHeight: number }
+  | { type: 'OPEN_WINDOW'; windowId: string; appId: string; title: string; icon: React.ReactNode; width: number; height: number; minWidth: number; minHeight: number }
   | { type: 'CLOSE_WINDOW'; windowId: string }
   | { type: 'MINIMIZE_WINDOW'; windowId: string }
   | { type: 'MAXIMIZE_WINDOW'; windowId: string }
@@ -250,7 +250,7 @@ export function useOS(): OSContextValue {
 }
 
 // App registry will be set up outside
-let appRegistryRef: Record<string, { name: string; icon: string; defaultWidth: number; defaultHeight: number; minWidth: number; minHeight: number }> = {};
+let appRegistryRef: Record<string, { name: string; icon: React.ReactNode; defaultWidth: number; defaultHeight: number; minWidth: number; minHeight: number }> = {};
 
 export function setAppRegistry(reg: typeof appRegistryRef) {
   appRegistryRef = reg;

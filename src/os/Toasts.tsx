@@ -1,6 +1,8 @@
 // DragonOS Toast Notifications
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS } from './context';
+import { Info, CheckCircle, XCircle, AlertTriangle, Trophy } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 const typeColors: Record<string, string> = {
   info: 'border-l-[#3b82f6]',
@@ -10,12 +12,12 @@ const typeColors: Record<string, string> = {
   achievement: 'border-l-[#a855f7]',
 };
 
-const typeIcons: Record<string, string> = {
-  info: 'ℹ️',
-  success: '✅',
-  error: '❌',
-  warning: '⚠️',
-  achievement: '🏆',
+const typeIcons: Record<string, ReactNode> = {
+  info: <Info size={14} className="text-[#3b82f6]" />,
+  success: <CheckCircle size={14} className="text-[#22c55e]" />,
+  error: <XCircle size={14} className="text-[#dc2626]" />,
+  warning: <AlertTriangle size={14} className="text-[#f59e0b]" />,
+  achievement: <Trophy size={14} className="text-[#a855f7]" />,
 };
 
 export default function Toasts() {
@@ -38,7 +40,7 @@ export default function Toasts() {
             }}
           >
             <div className="flex items-start gap-2">
-              <span className="text-sm mt-0.5">{typeIcons[toast.type]}</span>
+              <span className="mt-0.5 flex-shrink-0">{typeIcons[toast.type]}</span>
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-white/90 font-inter">{toast.title}</p>
                 <p className="text-[10px] text-white/50 font-inter mt-0.5">{toast.message}</p>

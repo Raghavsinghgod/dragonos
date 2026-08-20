@@ -3,23 +3,25 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useOS } from './context';
 import { sounds } from './sounds';
+import { appIconsLg } from './icons';
+import type { ReactNode } from 'react';
 
 interface DesktopApp {
   id: string;
   name: string;
-  icon: string;
+  icon: ReactNode;
   gradient: string;
 }
 
 const desktopApps: DesktopApp[] = [
-  { id: 'dashboard', name: 'Dashboard', icon: '📊', gradient: 'from-red-900/40 to-red-600/20' },
-  { id: 'notepad', name: 'Notepad', icon: '📝', gradient: 'from-amber-900/40 to-amber-600/20' },
-  { id: 'todo', name: 'Todo', icon: '✅', gradient: 'from-green-900/40 to-green-600/20' },
-  { id: 'calendar', name: 'Calendar', icon: '📅', gradient: 'from-blue-900/40 to-blue-600/20' },
-  { id: 'terminal', name: 'Terminal', icon: '💻', gradient: 'from-gray-900/60 to-gray-600/20' },
-  { id: 'goals', name: 'Goals', icon: '🎯', gradient: 'from-orange-900/40 to-orange-600/20' },
-  { id: 'clock', name: 'Clock', icon: '🕐', gradient: 'from-purple-900/40 to-purple-600/20' },
-  { id: 'calculator', name: 'Calculator', icon: '🔢', gradient: 'from-slate-900/40 to-slate-600/20' },
+  { id: 'dashboard', name: 'Dashboard', icon: appIconsLg.dashboard, gradient: 'from-red-900/40 to-red-600/20' },
+  { id: 'notepad', name: 'Notepad', icon: appIconsLg.notepad, gradient: 'from-amber-900/40 to-amber-600/20' },
+  { id: 'todo', name: 'Todo', icon: appIconsLg.todo, gradient: 'from-green-900/40 to-green-600/20' },
+  { id: 'calendar', name: 'Calendar', icon: appIconsLg.calendar, gradient: 'from-blue-900/40 to-blue-600/20' },
+  { id: 'terminal', name: 'Terminal', icon: appIconsLg.terminal, gradient: 'from-gray-900/60 to-gray-600/20' },
+  { id: 'goals', name: 'Goals', icon: appIconsLg.goals, gradient: 'from-orange-900/40 to-orange-600/20' },
+  { id: 'clock', name: 'Clock', icon: appIconsLg.clock, gradient: 'from-purple-900/40 to-purple-600/20' },
+  { id: 'calculator', name: 'Calculator', icon: appIconsLg.calculator, gradient: 'from-slate-900/40 to-slate-600/20' },
 ];
 
 export default function DesktopIcons() {
@@ -46,7 +48,7 @@ export default function DesktopIcons() {
             selected === app.id ? 'bg-white/10 ring-1 ring-white/20' : 'hover:bg-white/5'
           } bg-gradient-to-br ${app.gradient}`}
         >
-          <span className="text-2xl">{app.icon}</span>
+          <span className="text-[#dc2626]">{app.icon}</span>
           <span className="text-[9px] text-white/60 font-inter leading-tight text-center">{app.name}</span>
         </motion.button>
       ))}

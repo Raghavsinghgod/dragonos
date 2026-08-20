@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useOS } from './context';
 import { sounds } from './sounds';
 import { save, load } from './persist';
+import { appIcons } from './icons';
+import { Moon, Sun, Volume2 } from 'lucide-react';
 
 export default function Drawer() {
   const { state, dispatch, openApp, addToast } = useOS();
@@ -44,12 +46,12 @@ export default function Drawer() {
   };
 
   const quickActions = [
-    { icon: '📊', label: 'Dashboard', action: () => openApp('dashboard') },
-    { icon: '📝', label: 'Notepad', action: () => openApp('notepad') },
-    { icon: '✅', label: 'Todo', action: () => openApp('todo') },
-    { icon: '🍅', label: 'Pomodoro', action: () => openApp('pomodoro') },
-    { icon: '😴', label: 'Sleep', action: () => { dispatch({ type: 'SLEEP' }); setOpen(false); } },
-    { icon: '⚙️', label: 'Settings', action: () => openApp('settings') },
+    { icon: appIcons.dashboard, label: 'Dashboard', action: () => openApp('dashboard') },
+    { icon: appIcons.notepad, label: 'Notepad', action: () => openApp('notepad') },
+    { icon: appIcons.todo, label: 'Todo', action: () => openApp('todo') },
+    { icon: appIcons.pomodoro, label: 'Pomodoro', action: () => openApp('pomodoro') },
+    { icon: <Moon size={18} />, label: 'Sleep', action: () => { dispatch({ type: 'SLEEP' }); setOpen(false); } },
+    { icon: appIcons.settings, label: 'Settings', action: () => openApp('settings') },
   ];
 
   const h = time.getHours().toString().padStart(2, '0');
@@ -107,7 +109,7 @@ export default function Drawer() {
                       onClick={() => { a.action(); setOpen(false); }}
                       className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-white/5 transition-colors"
                     >
-                      <span className="text-lg">{a.icon}</span>
+                      <span className="text-white/50">{a.icon}</span>
                       <span className="text-[9px] text-white/40 font-inter">{a.label}</span>
                     </button>
                   ))}
@@ -117,7 +119,7 @@ export default function Drawer() {
               {/* Brightness */}
               <div className="px-4 pb-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm">☀️</span>
+                  <Sun size={14} className="text-white/40 flex-shrink-0" />
                   <input type="range" min={0} max={100} value={brightness}
                     onChange={e => setBrightness(Number(e.target.value))}
                     className="flex-1 h-1 bg-white/10 rounded-full appearance-none accent-[#dc2626]" />
@@ -128,7 +130,7 @@ export default function Drawer() {
               {/* Volume */}
               <div className="px-4 pb-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm">🔊</span>
+                  <Volume2 size={14} className="text-white/40 flex-shrink-0" />
                   <input type="range" min={0} max={100} value={volume}
                     onChange={e => setVolume(Number(e.target.value))}
                     className="flex-1 h-1 bg-white/10 rounded-full appearance-none accent-[#dc2626]" />
