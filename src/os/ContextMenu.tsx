@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS } from './context';
 import { sounds } from './sounds';
-import { Columns3, Monitor, Settings, Rocket, Volume2, VolumeX, Palette, Moon } from 'lucide-react';
+import { Columns3, Monitor, Settings, Rocket, Volume2, VolumeX, Palette, Moon, LayoutGrid } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 interface MenuItem {
@@ -37,6 +37,7 @@ export default function ContextMenu({ onOpenSettings, onOpenLaunchpad }: { onOpe
     { label: 'Show Desktop', icon: <Monitor size={14} />, action: () => { dispatch({ type: 'SHOW_DESKTOP' }); sounds.minimize(); } },
     { label: 'Settings', icon: <Settings size={14} />, action: () => { onOpenSettings(); sounds.click(); } },
     { label: 'Launchpad', icon: <Rocket size={14} />, action: () => { onOpenLaunchpad(); sounds.click(); } },
+    { label: 'Widgets', icon: <LayoutGrid size={14} />, action: () => { document.dispatchEvent(new CustomEvent('dragonos-toggle-widgets')); sounds.click(); } },
     { label: '', icon: null, action: () => {}, divider: true },
     { label: 'Toggle Sound', icon: state.desktop.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />, action: () => { dispatch({ type: 'TOGGLE_SOUND' }); sounds.click(); } },
     { label: 'Cycle Wallpaper', icon: <Palette size={14} />, action: () => {

@@ -14,6 +14,7 @@ import DesktopIcons from './DesktopIcons';
 import SleepMode from './SleepMode';
 import Toasts from './Toasts';
 import KonamiCode from './Konami';
+import Widgets from './Widgets';
 
 export default function Desktop() {
   const { state, openApp } = useOS();
@@ -94,6 +95,9 @@ export default function Desktop() {
 
       {/* Sleep Mode */}
       <SleepMode />
+
+      {/* Desktop Widgets */}
+      {state.desktop.booted && <Widgets />}
 
       {/* Toasts */}
       <Toasts />
