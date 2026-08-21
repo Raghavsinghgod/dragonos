@@ -1,13 +1,38 @@
 // DragonOS Settings App
 import { useState } from 'react';
+import { Flame } from 'lucide-react';
 import { useOS } from '../context';
 import { save, load, clearAll } from '../persist';
 import { sounds } from '../sounds';
+import { widgetTypes, type WidgetType } from '../Widgets';
+import type { WidgetConfig } from '../Widgets';
 
 export default function Settings() {
   const { state, dispatch, addToast } = useOS();
   const [username, setUsername] = useState(state.desktop.username);
   const [resetConfirm, setResetConfirm] = useState(0);
+
+  // Local mirror of widget visibility — changes are broadcast to the live
+  // desktop layer via events so both views stay in sync instantly.
+  const [widgetOn, setWidgetOn] = useState<Record<string, boolean>>(() => {
+    const cfg = load<WidgetConfig[]>('widgets', []);
+    return Object.fromEntries(widgetTypes.map(w => [
+      w.type,
+      cfg.some(c => c.type === w.type && c.visible),
+    ]));
+  });
+
+  const toggleWidget = (type: WidgetType) => {
+    setWidgetOn(prev => ({ ...prev, [type]: !prev[type] }));
+    document.dispatchEvent(new CustomEvent('dragonos-widget-toggle', { detail: type }));
+    sounds.click();
+  };
+
+  const resetWidgets = () => {
+    setWidgetOn(Object.fromEntries(widgetTypes.map(w => [w.type, ['clock', 'date', 'quote'].includes(w.type)])));
+    document.dispatchEvent(new CustomEvent('dragonos-widgets-reset'));
+    sounds.click();
+  };
 
   const shortcuts = [
     { keys: 'Ctrl+K', desc: 'Command Palette' },
@@ -73,6 +98,32 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Desktop Widgets */}
+      <div className="p-3 rounded-xl bg-white/5">
+        <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2">Desktop Widgets</p>
+        <div className="space-y-0.5">
+          {widgetTypes.map(w => (
+            <button key={w.type} onClick={() => toggleWidget(w.type)} role="switch" aria-checked={!!widgetOn[w.type]}
+              className="w-full flex items-center gap-3 py-1.5 text-left hover:bg-white/[0.03] rounded-lg px-1 -mx-1 transition-colors">
+              <span className="w-6 h-6 rounded-md bg-white/[0.05] border border-white/[0.06] flex items-center justify-center text-[#dc2626]/80 flex-shrink-0 [&_svg]:w-3 [&_svg]:h-3">
+                {w.icon}
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[11px] text-white/70 leading-tight">{w.label}</span>
+                <span className="block text-[9px] text-white/30 mt-0.5">{w.desc}</span>
+              </span>
+              <span className="lg-switch" data-on={!!widgetOn[w.type]}>
+                <span className="lg-switch-knob" />
+              </span>
+            </button>
+          ))}
+        </div>
+        <button onClick={resetWidgets}
+          className="mt-2 w-full py-1.5 rounded-lg bg-white/5 text-[10px] text-white/40 hover:text-white/60 transition-colors">
+          Reset Widget Layout
+        </button>
+      </div>
+
       {/* Shortcuts */}
       <div className="p-3 rounded-xl bg-white/5">
         <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2">Keyboard Shortcuts</p>
@@ -99,7 +150,7 @@ export default function Settings() {
 
       {/* About */}
       <div className="p-3 rounded-xl bg-white/5 text-center">
-        <p className="text-lg mb-1">🐉</p>
+        <Flame className="w-6 h-6 mx-auto mb-1 text-[#dc2626]" />
         <p className="text-xs text-white/50">DragonOS v1.0</p>
         <p className="text-[9px] text-white/20 mt-0.5">Built with fire and code</p>
       </div>

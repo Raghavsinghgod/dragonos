@@ -10,7 +10,6 @@ import StartMenu from './StartMenu';
 import ContextMenu from './ContextMenu';
 import CommandPalette from './CommandPalette';
 import Drawer from './Drawer';
-import DesktopIcons from './DesktopIcons';
 import SleepMode from './SleepMode';
 import Toasts from './Toasts';
 import KonamiCode from './Konami';
@@ -68,9 +67,6 @@ export default function Desktop() {
 
       {/* Wallpaper — always renders, uses RAF parallax (zero state updates) */}
       {showDesktop && <Wallpaper />}
-
-      {/* Desktop Icons */}
-      {showDesktop && <DesktopIcons />}
 
       {/* Windows */}
       {showDesktop && <WindowManager />}

@@ -40,6 +40,12 @@ const widgetMeta: Record<WidgetType, {
   quote:    { label: 'Quote',     desc: 'Rotating wisdom',         icon: <Quote size={14} />,       defaultW: 240 },
 };
 
+// Exported for the Settings app — single source of truth for the catalog
+export const widgetTypes = (Object.keys(widgetMeta) as WidgetType[]).map(type => ({
+  type,
+  ...widgetMeta[type],
+}));
+
 const QUOTES = [
   { text: 'The only way to do great work is to love what you do.', author: 'Steve Jobs' },
   { text: 'Innovation distinguishes between a leader and a follower.', author: 'Steve Jobs' },
@@ -75,7 +81,14 @@ function DraggableWidget({ config, onMove, onRemove, children }: {
   const offset = useRef({ x: 0, y: 0 });
   const throttle = useRafThrottle();
 
+  // Keep a stable ref to the latest move handler so the drag listeners
+  // never need to re-subscribe mid-drag
+  const onMoveRef = useRef(onMove);
+  useEffect(() => { onMoveRef.current = onMove; }, [onMove]);
+
+  // Drag from anywhere on the card except interactive controls
   const onDragStart = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button, input, textarea, select, a, [data-no-drag]')) return;
     e.preventDefault();
     setDragging(true);
     const rect = dragRef.current?.getBoundingClientRect();
@@ -87,7 +100,7 @@ function DraggableWidget({ config, onMove, onRemove, children }: {
     const onMove2 = (e: MouseEvent) => {
       const nx = e.clientX - offset.current.x;
       const ny = e.clientY - offset.current.y;
-      throttle(() => onMove(nx, ny));
+      throttle(() => onMoveRef.current(nx, ny));
     };
     const onUp = () => setDragging(false);
     window.addEventListener('mousemove', onMove2);
@@ -96,7 +109,7 @@ function DraggableWidget({ config, onMove, onRemove, children }: {
       window.removeEventListener('mousemove', onMove2);
       window.removeEventListener('mouseup', onUp);
     };
-  }, [dragging, throttle, onMove]);
+  }, [dragging, throttle]);
 
   return (
     <div
@@ -115,7 +128,8 @@ function DraggableWidget({ config, onMove, onRemove, children }: {
         animate={{ opacity: 1, scale: dragging ? 1.03 : 1 }}
         exit={{ opacity: 0, scale: 0.92 }}
         transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-        className="lgglass lg-sheen rounded-2xl"
+        className="lgglass lg-sheen rounded-2xl cursor-grab active:cursor-grabbing"
+        onMouseDown={onDragStart}
         style={{
           width: widgetMeta[config.type].defaultW,
           boxShadow: dragging
@@ -123,13 +137,9 @@ function DraggableWidget({ config, onMove, onRemove, children }: {
             : undefined,
         }}
       >
-        {/* Grip header — always visible so dragging is discoverable */}
+        {/* Grip header — affordance; the whole card drags */}
         <div className="relative flex items-center justify-between px-2.5 py-1.5 border-b border-white/[0.06] bg-white/[0.02]">
-          <div
-            className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing -my-1 py-1 pr-2"
-            onMouseDown={onDragStart}
-            title="Drag to move"
-          >
+          <div className="flex items-center gap-1.5 -my-1 py-1 pr-2" title="Drag to move">
             <GripVertical size={11} className="text-white/30" />
             <span className="text-[9px] uppercase tracking-[0.14em] text-white/35 font-inter">
               {widgetMeta[config.type].label}
@@ -473,6 +483,18 @@ export default function Widgets() {
   const resetLayout = useCallback(() => {
     setWidgets(defaultWidgets.map(w => ({ ...w })));
   }, [setWidgets]);
+
+  // Settings app toggles widget types / resets layout remotely
+  useEffect(() => {
+    const onToggleType = (e: Event) => toggleType((e as CustomEvent).detail as WidgetType);
+    const onReset = () => resetLayout();
+    document.addEventListener('dragonos-widget-toggle', onToggleType);
+    document.addEventListener('dragonos-widgets-reset', onReset);
+    return () => {
+      document.removeEventListener('dragonos-widget-toggle', onToggleType);
+      document.removeEventListener('dragonos-widgets-reset', onReset);
+    };
+  }, [toggleType, resetLayout]);
 
   const allTypes = useMemo(() => Object.keys(widgetMeta) as WidgetType[], []);
   const visibleWidgets = useMemo(() => widgets.filter(w => w.visible), [widgets]);
