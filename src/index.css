@@ -304,6 +304,40 @@
   to { opacity: 1; }
 }
 
+/* Boot v2 — cinematic 4s auto-boot */
+.boot-enter { animation: bootFadeIn 0.4s ease-out; }
+.boot-exit { animation: bootExit 0.35s ease-in forwards; }
+@keyframes bootExit {
+  to { opacity: 0; transform: scale(1.04); filter: blur(6px); }
+}
+.boot-backdrop {
+  opacity: 0;
+  animation: bootBackdropIn 1.2s ease-out forwards, bootKenBurns 8s ease-out forwards;
+}
+@keyframes bootBackdropIn {
+  to { opacity: 0.9; }
+}
+@keyframes bootKenBurns {
+  from { transform: scale(1.12); }
+  to { transform: scale(1); }
+}
+.boot-wordmark {
+  opacity: 0;
+  animation: bootWordmarkIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards;
+}
+@keyframes bootWordmarkIn {
+  from { opacity: 0; transform: translateY(10px); letter-spacing: 0.7em; }
+  to { opacity: 1; transform: translateY(0); letter-spacing: 0.45em; }
+}
+.boot-progress {
+  width: 0%;
+  animation: bootProgressFill 4s linear forwards;
+}
+@keyframes bootProgressFill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
 /* Toasts — CSS slide-in replacing framer-motion */
 .toast-item {
   background: rgba(12,12,18,0.92);
