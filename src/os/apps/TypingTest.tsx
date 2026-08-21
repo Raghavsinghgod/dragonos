@@ -10,7 +10,7 @@ const sentences = [
 ];
 
 export default function TypingTest() {
-  const [text, setText] = useState(sentences[Math.floor(Math.random() * sentences.length)]);
+  const [text, setText] = useState(() => sentences[Math.floor(Math.random() * sentences.length)]);
   const [input, setInput] = useState('');
   const [running, setRunning] = useState(false);
   const [time, setTime] = useState(30);

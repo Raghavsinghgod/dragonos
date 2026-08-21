@@ -52,7 +52,7 @@ const WindowFrame = memo(function WindowFrame({ win }: { win: WindowState }) {
       rafThrottle(() => {
         const dx = e.clientX - dragStart.current.x;
         const dy = e.clientY - dragStart.current.y;
-        let nx = dragStart.current.wx + dx;
+        const nx = dragStart.current.wx + dx;
         let ny = dragStart.current.wy + dy;
         if (ny <= 0) ny = 0;
         dispatch({ type: 'MOVE_WINDOW', windowId: win.id, x: nx, y: Math.max(0, ny) });

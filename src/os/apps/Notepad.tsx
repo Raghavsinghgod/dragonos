@@ -1,5 +1,5 @@
 // DragonOS Notepad App
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { usePersist } from '../persist';
 import type { Note } from '../types';
 

@@ -19,7 +19,7 @@ export default function FocusSounds() {
   const nodesRef = useRef<AudioNode[]>([]);
 
   const stopAll = useCallback(() => {
-    nodesRef.current.forEach(n => { try { n.disconnect(); } catch {} });
+    nodesRef.current.forEach(n => { try { n.disconnect(); } catch { /* already disconnected */ } });
     nodesRef.current = [];
     if (ctxRef.current) { ctxRef.current.close(); ctxRef.current = null; }
   }, []);

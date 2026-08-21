@@ -1,6 +1,6 @@
 // DragonOS desktop right-click menu
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useOS, useDesktop } from './context';
 import { sounds } from './sounds';
 import { Columns3, Monitor, Settings, Rocket, Volume2, VolumeX, Palette, Moon, LayoutGrid } from 'lucide-react';

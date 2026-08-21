@@ -1,5 +1,5 @@
 // DragonOS System Monitor App
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { load } from '../persist';
 
 export default function SystemMonitor() {
@@ -7,8 +7,8 @@ export default function SystemMonitor() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const todos = load<any[]>('todos', []);
-      const habits = load<any[]>('habits', []);
+      const todos = load<{ done: boolean }[]>('todos', []);
+      const habits = load<{ completions: string[] }[]>('habits', []);
       const doneCount = todos.filter(t => t.done).length;
       const habitCount = habits.filter(h => {
         const today = new Date().toISOString().split('T')[0];

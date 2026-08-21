@@ -13,21 +13,18 @@ export default function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const toggle = useCallback(() => setOpen(prev => !prev), []);
+  // Reset search state here rather than in an effect — no cascading renders
+  const toggle = useCallback(() => {
+    setOpen(prev => !prev);
+    setQuery('');
+    setSelectedIndex(0);
+  }, []);
 
   useEffect(() => {
     const handler = () => toggle();
     document.addEventListener('dragonos-command-palette', handler);
     return () => document.removeEventListener('dragonos-command-palette', handler);
   }, [toggle]);
-
-  useEffect(() => {
-    if (open) {
-      setQuery('');
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [open]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -62,8 +59,7 @@ export default function CommandPalette() {
     }
   }, [results, selectedIndex, openApp]);
 
-  // Reset selection when query changes
-  useEffect(() => { setSelectedIndex(0); }, [query]);
+
 
   const handleSelect = useCallback((appId: string) => {
     sounds.click();
@@ -97,7 +93,7 @@ export default function CommandPalette() {
               <input
                 ref={inputRef}
                 value={query}
-                onChange={e => setQuery(e.target.value)}
+                onChange={e => { setQuery(e.target.value); setSelectedIndex(0); }}
                 onKeyDown={handleKeyDown}
                 placeholder="Search apps..."
                 className="flex-1 bg-transparent text-sm text-white/80 placeholder:text-white/30 outline-none font-inter"

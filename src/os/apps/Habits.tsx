@@ -64,7 +64,6 @@ export default function Habits() {
       <div className="space-y-2 max-h-[350px] overflow-y-auto">
         {habits.map(h => {
           const streak = getStreak(h.completions);
-          const weekDone = days.filter(d => h.completions.includes(d)).length;
           return (
             <div key={h.id} className="p-3 rounded-xl bg-white/5">
               <div className="flex items-center justify-between mb-2">

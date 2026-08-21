@@ -41,7 +41,7 @@ export default function Terminal() {
       case 'stats':
         newLines.push({ text: `Apps: 28 | Uptime: ${Math.floor((Date.now() - performance.timeOrigin) / 1000)}s | Memory: ∞`, type: 'output' });
         break;
-      case 'hack':
+      case 'hack': {
         setHacking(true);
         setLines([...newLines]);
         const hackLines: Line[] = [];
@@ -62,6 +62,7 @@ export default function Terminal() {
         }, 80);
         setInput('');
         return;
+      }
       case 'sudo':
         if (args === 'win') {
           newLines.push({ text: '🏆 You win! The dragon grants you ultimate power.', type: 'success' });

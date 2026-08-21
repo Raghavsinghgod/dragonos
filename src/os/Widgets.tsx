@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePersist } from './persist';
 import {
   Clock, Calendar, CheckSquare, Target, Timer, Quote,
-  GripVertical, X, Plus, SlidersHorizontal, RotateCcw,
+  GripVertical, X, Plus, RotateCcw,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 

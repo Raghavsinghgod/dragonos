@@ -33,14 +33,20 @@ export function clearAll(): void {
 
 /**
  * React hook: useState + localStorage persistence with debounced writes.
- * Only writes to localStorage after 500ms of no updates to avoid thrashing.
+ * Writes only after 500ms of no updates, and never on the initial mount —
+ * so opening many apps doesn't hammer localStorage at boot.
  */
 export function usePersist<T>(key: string, fallback: T): [T, (value: T | ((prev: T) => T)) => void] {
   const [value, setValue] = useState<T>(() => load(key, fallback));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dirtyRef = useRef(false);
 
   useEffect(() => {
-    // Debounced save — only write after 500ms of no changes
+    if (!dirtyRef.current) {
+      // First run after mount: value came from storage (or fallback) — skip write
+      dirtyRef.current = true;
+      return;
+    }
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => save(key, value), 500);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };

@@ -1,5 +1,5 @@
 // DragonOS Todo App
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 import type { TodoItem } from '../types';
@@ -17,7 +17,6 @@ export default function Todo() {
   const [todos, setTodos] = usePersist<TodoItem[]>('todos', []);
   const [filter, setFilter] = useState<Filter>('all');
   const [newText, setNewText] = useState('');
-  const [celebrated, setCelebrated] = useState(false);
 
   const filtered = useMemo(() => {
     if (filter === 'active') return todos.filter(t => !t.done);
@@ -29,12 +28,16 @@ export default function Todo() {
   const progress = todos.length > 0 ? (doneCount / todos.length) * 100 : 0;
   const allDone = todos.length > 0 && doneCount === todos.length;
 
+  // Ref-based celebration guard — fires once per completion streak
+  const celebratedRef = useRef(false);
   useEffect(() => {
-    if (allDone && !celebrated) {
+    if (allDone && !celebratedRef.current) {
+      celebratedRef.current = true;
       sounds.victory();
-      setCelebrated(true);
+    } else if (!allDone) {
+      celebratedRef.current = false;
     }
-  }, [allDone, celebrated]);
+  }, [allDone]);
 
   const addTodo = () => {
     if (!newText.trim()) return;

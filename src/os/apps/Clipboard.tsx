@@ -1,5 +1,5 @@
 // DragonOS Clipboard App
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 
@@ -9,23 +9,23 @@ export default function Clipboard() {
   const [items, setItems] = usePersist<ClipItem[]>('clipboard-items', []);
   const [manualInput, setManualInput] = useState('');
 
-  // Listen for clipboard paste
+  // Functional update keeps this stable across renders — no stale closures
+  const addClip = useCallback((text: string) => {
+    setItems(prev => {
+      if (prev.some(i => i.text === text)) return prev;
+      return [{ id: Date.now().toString(), text, time: Date.now() }, ...prev].slice(0, 50);
+    });
+  }, [setItems]);
+
+  // Capture system-wide pastes into the clip list
   useEffect(() => {
     const handler = (e: ClipboardEvent) => {
       const text = e.clipboardData?.getData('text');
-      if (text && text.trim()) {
-        addClip(text.trim());
-      }
+      if (text && text.trim()) addClip(text.trim());
     };
     window.addEventListener('paste', handler);
     return () => window.removeEventListener('paste', handler);
-  }, []);
-
-  const addClip = (text: string) => {
-    const exists = items.find(i => i.text === text);
-    if (exists) return;
-    setItems([{ id: Date.now().toString(), text, time: Date.now() }, ...items].slice(0, 50));
-  };
+  }, [addClip]);
 
   const addManual = () => {
     if (!manualInput.trim()) return;

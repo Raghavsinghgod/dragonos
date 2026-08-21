@@ -1,5 +1,5 @@
 // DragonOS Pomodoro App
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { sounds } from '../sounds';
 import { usePersist } from '../persist';
 

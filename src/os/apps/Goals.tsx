@@ -1,5 +1,5 @@
 // DragonOS Goals App
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePersist } from '../persist';
 import { sounds } from '../sounds';
 import type { Goal } from '../types';

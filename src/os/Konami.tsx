@@ -1,5 +1,5 @@
 // DragonOS easter egg — Konami code triggers confetti rain + fanfare
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { sounds } from './sounds';
 
 const EMOJIS = ['🐉', '🎆', '🎉', '✨', '🔥', '💎', '🎊', '⭐', '❤️', '🖤'];

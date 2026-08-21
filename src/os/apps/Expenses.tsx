@@ -18,7 +18,10 @@ export default function Expenses() {
   const [budget, setBudget] = usePersist('expenses-budget', 2000);
 
   const month = new Date().toISOString().slice(0, 7);
-  const monthExpenses = expenses.filter(e => e.date.startsWith(month));
+  const monthExpenses = useMemo(
+    () => expenses.filter(e => e.date.startsWith(month)),
+    [expenses, month],
+  );
   const total = monthExpenses.reduce((s, e) => s + e.amount, 0);
   const progress = Math.min(100, (total / budget) * 100);
 

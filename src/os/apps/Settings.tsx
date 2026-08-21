@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Flame } from 'lucide-react';
 import { useOS } from '../context';
-import { save, load, clearAll } from '../persist';
+import { load, clearAll } from '../persist';
 import { sounds } from '../sounds';
 import { widgetTypes, type WidgetType } from '../Widgets';
 import type { WidgetConfig } from '../Widgets';

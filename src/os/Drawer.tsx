@@ -1,7 +1,7 @@
 // DragonOS drawer — right-edge panel with clock, quick actions and notes
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useOS, useDesktop } from './context';
+import { useOS } from './context';
 import { sounds } from './sounds';
 import { save, load } from './persist';
 import { appIcons } from './icons';
@@ -9,7 +9,6 @@ import { Moon, Sun, Volume2 } from 'lucide-react';
 
 export default function Drawer() {
   const { dispatch, openApp } = useOS();
-  const desktop = useDesktop();
   const [open, setOpen] = useState(false);
   const [volume, setVolume] = useState(() => load('drawer-volume', 70));
   const [brightness, setBrightness] = useState(() => load('drawer-brightness', 100));
