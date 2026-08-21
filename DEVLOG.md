@@ -108,6 +108,18 @@ Fix was deleting three lines. The best bugs are the ones where the fix is deleti
 
 ---
 
+## Entry 11 — The audit
+
+The build broke on a Vercel deploy and the traceback pointed at `src/convex/users.ts`. A file I had deleted. Turns out deletion is only half the job — the *generated* Convex files were still sitting in two places (src and root), `package.json` still shipped the entire auth stack for a login screen that no longer exists, and the entry point was importing three files that hadn't existed for days.
+
+So: full audit. Removed both convex graveyards, dropped fifty packages the code never imports (the whole Radix shelf went — the OS draws its own controls now), deleted the npm lockfile that was quietly making every install twice as slow, and made `main.tsx` honest again: eight lines that mount the root and leave.
+
+ESLint then caught two real bugs the compiler didn't: the calculator's `%` key was reading a stale display through an un-memoized callback, and the Pomodoro timer re-armed with round lengths it captured per-render. Both fixed properly instead of silenced.
+
+Running total of this project's guiding principle: most features are finished not when you add the last thing, but when you remove the last thing that shouldn't be there.
+
+---
+
 ## Where it stands
 
 Boots in two seconds. Twenty-eight apps, six draggable widgets, a dock with gaussian physics, keyboard shortcuts, a command palette, sleep mode, a konami code, synthesized UI sounds, and a wallpaper of an actual dragon on actual leather. All client-side, all offline, all persisted.

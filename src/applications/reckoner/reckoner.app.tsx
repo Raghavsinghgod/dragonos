@@ -37,10 +37,11 @@ export default function Calculator() {
     setFresh(true);
   }, [prev, op, display]);
 
-  const clear = () => { sounds.click(); setDisplay('0'); setPrev(null); setOp(null); setFresh(true); };
-  const percent = () => { sounds.click(); setDisplay(String(parseFloat(display) / 100)); };
+  const clear = useCallback(() => { sounds.click(); setDisplay('0'); setPrev(null); setOp(null); setFresh(true); }, []);
+  // Stable callbacks so the keyboard effect never fires with a stale `display`
+  const percent = useCallback(() => { sounds.click(); setDisplay(d => String(parseFloat(d) / 100)); }, []);
   const sign = () => { sounds.click(); setDisplay(String(-parseFloat(display))); };
-  const dot = () => { sounds.click(); if (!display.includes('.')) setDisplay(d => d + '.'); setFresh(false); };
+  const dot = useCallback(() => { sounds.click(); setDisplay(d => (d.includes('.') ? d : d + '.')); setFresh(false); }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -53,7 +54,7 @@ export default function Calculator() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [input, operator, equals]);
+  }, [input, operator, equals, clear, dot, percent]);
 
   const buttons = [
     ['C', '±', '%', '÷'],

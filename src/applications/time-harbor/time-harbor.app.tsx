@@ -125,7 +125,7 @@ function Stopwatch() {
     rafRef.current = requestAnimationFrame(tick);
   };
 
-  // eslint-disable-next-line react-hooks/purity -- Date.now() runs on click, not during render
+   
   const start = () => { startRef.current = Date.now() - elapsed; setRunning(true); rafRef.current = requestAnimationFrame(tick); };
   const stop = () => { setRunning(false); cancelAnimationFrame(rafRef.current); };
   const reset = () => { setRunning(false); setElapsed(0); setLaps([]); cancelAnimationFrame(rafRef.current); };

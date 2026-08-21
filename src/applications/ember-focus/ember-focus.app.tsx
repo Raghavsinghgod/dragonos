@@ -3,15 +3,17 @@ import { useState, useEffect, useRef } from 'react';
 import { sounds } from '@/lib/audio/cues';
 import { usePersist } from '@/state/persistence/local-storage';
 
+// Round lengths live at module scope — they never change, so the timer
+// effect can close over them without re-arming.
+const WORK = 25 * 60;
+const BREAK = 5 * 60;
+
 export default function Pomodoro() {
   const [mode, setMode] = useState<'work' | 'break'>('work');
   const [seconds, setSeconds] = useState(25 * 60);
   const [running, setRunning] = useState(false);
   const [sessions, setSessions] = usePersist<number>('pomodoro-sessions', 0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const WORK = 25 * 60;
-  const BREAK = 5 * 60;
 
   useEffect(() => {
     if (!running) return;
@@ -35,7 +37,7 @@ export default function Pomodoro() {
       });
     }, 1000);
     return () => clearInterval(intervalRef.current!);
-  }, [running, mode]);
+  }, [running, mode, setSessions]);
 
   const start = () => { sounds.click(); setRunning(true); };
   const stop = () => { sounds.click(); setRunning(false); };

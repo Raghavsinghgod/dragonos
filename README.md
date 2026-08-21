@@ -36,35 +36,36 @@ A dragon-themed **web operating system** that runs entirely in your browser. Flo
 
 ```
 src/
-├── main.tsx              # Router — every route boots the desktop
-├── pages/
-│   ├── Dashboard.tsx     # Mounts OSProvider + Desktop
-│   └── NotFound.tsx      # Themed 404
-└── os/
-    ├── Desktop.tsx       # Root orchestrator — assembles the shell
-    ├── context.tsx       # Global state: reducer split into fine-grained
-    │                     #   contexts (desktop / windows / toasts / actions)
-    ├── WindowManager.tsx # Window lifecycle, drag, resize, snapping
-    ├── Dock.tsx          # Magnifying dock + launchpad
-    ├── StartMenu.tsx     # Searchable launcher (exports `allApps`)
-    ├── CommandPalette.tsx# Ctrl+K fuzzy search
-    ├── ContextMenu.tsx   # Right-click desktop menu
-    ├── Drawer.tsx        # Right-edge quick panel
-    ├── Widgets.tsx       # Widget system + manage panel (+ exports catalog)
-    ├── Wallpaper.tsx     # Photo wallpaper, CSS stars/embers, RAF parallax
-    ├── BootSequence.tsx  # 2s boot
-    ├── Toasts.tsx        # Notification stack
-    ├── SleepMode.tsx     # Sleep overlay
-    ├── Konami.tsx        # Easter egg
-    ├── persist.ts        # usePersist — debounced localStorage hook
-    ├── sounds.ts         # WebAudio engine — lazy init, rate-limited blips
-    ├── icons.tsx         # Lucide icon map for all apps
-    └── apps/             # 28 self-contained app components + registry
+├── main.tsx                  # Entry — mounts DragonOsRoot
+├── DragonOsRoot.tsx          # Router + last-resort crash boundary
+│
+├── system/                   # The OS shell (feature-first, no 'components' dumping ground)
+│   ├── boot/BootGate.tsx     # 2s boot sequence
+│   ├── desktop/              # DesktopStage orchestrator, backdrop, context menu, 404
+│   ├── windowing/WindowField.tsx   # Window lifecycle, drag, resize, snapping
+│   ├── dock/DockRail.tsx     # Gaussian-magnifying dock + launchpad
+│   ├── app-drawer/           # Searchable launcher grid
+│   ├── command-palette/      # Ctrl+K fuzzy search
+│   ├── drawer/               # Right-edge quick panel
+│   ├── widgets/              # Draggable desktop widgets + manage panel
+│   ├── sleep/ · toasts/ · easter-egg/
+│
+├── applications/             # One folder per app, registered in index.ts
+│   └── <app-name>/<app-name>.app.tsx
+│
+├── state/
+│   ├── os/providers.tsx      # Reducer split into fine-grained contexts
+│   │                         #   (desktop / windows / toasts / actions)
+│   └── persistence/local-storage.ts  # save/load + usePersist (debounced)
+│
+├── lib/audio/cues.ts         # WebAudio engine — synthesized UI sounds
+├── types/os.types.ts         # Shared domain types
+└── ui/icons/icon-map.tsx     # Lucide icon map for all apps
 ```
 
 ### State model
 
-- **No backend.** All state lives in `localStorage` (namespaced `dragonos.*`) via the `usePersist` hook — writes are debounced 500ms and skipped entirely on first mount, so booting 20 apps costs zero storage writes.
+- **No backend.** All state lives in `localStorage` (namespaced `dragonos.*`) via the `usePersist` hook (`state/persistence/local-storage.ts`) — writes are debounced 500ms and skipped entirely on first mount, so booting 20 apps costs zero storage writes.
 - **Window state** flows through a reducer exposed as *split contexts* — components subscribe only to the slice they use (`useWindows`, `useToasts`, `useDesktop`, `useOS` for actions), so a dragging window never re-renders the dock.
 - **Window lifecycle:** `OPEN → FOCUS / MINIMIZE / MAXIMIZE → CLOSE (animState 'closing') → REMOVE` — closed windows are fully removed from state 320ms after the exit animation, so reopening always works.
 
@@ -115,8 +116,8 @@ bun run lint       # eslint
 
 ### Conventions
 
-- New apps: create `src/os/apps/MyApp.tsx`, register it in `src/os/apps/index.ts`, add its icon in `src/os/icons.tsx`
-- Persisted data: `usePersist<T>('my-key', fallback)` — keys are namespaced automatically
+- New apps: create `src/applications/my-app/my-app.app.tsx`, import it and register it in `src/applications/index.ts`, add its icon in `src/ui/icons/icon-map.tsx`
+- Persisted data: `usePersist<T>('my-key', fallback)` from `@/state/persistence/local-storage` — keys are namespaced automatically
 - Theming: black `#050508`, crimson `#dc2626`, glass via `.lgglass` / `.win-glass`, fonts `font-display` (Cinzel), `font-inter`, `font-mono` (JetBrains Mono), `font-caveat`
 
 ---
