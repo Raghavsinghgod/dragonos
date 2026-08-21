@@ -42,7 +42,7 @@ export default function ContextMenu({ onOpenSettings, onOpenLaunchpad }: { onOpe
     { label: 'Show Desktop', icon: <Monitor size={14} />, action: () => { dispatch({ type: 'SHOW_DESKTOP' }); sounds.minimize(); } },
     { label: 'Settings', icon: <Settings size={14} />, action: () => { onOpenSettings(); sounds.click(); } },
     { label: 'Launchpad', icon: <Rocket size={14} />, action: () => { onOpenLaunchpad(); sounds.click(); } },
-    { label: 'Widgets', icon: <LayoutGrid size={14} />, action: () => { document.dispatchEvent(new CustomEvent('dragonos-toggle-widgets')); sounds.click(); } },
+    { label: 'Manage Widgets', icon: <LayoutGrid size={14} />, action: () => { document.dispatchEvent(new CustomEvent('dragonos-toggle-widgets')); sounds.click(); } },
     { label: '', icon: null, action: () => {}, divider: true },
     { label: 'Toggle Sound', icon: desktop.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />, action: () => { dispatch({ type: 'TOGGLE_SOUND' }); sounds.click(); } },
     { label: 'Cycle Wallpaper', icon: <Palette size={14} />, action: () => {
@@ -63,13 +63,10 @@ export default function ContextMenu({ onOpenSettings, onOpenLaunchpad }: { onOpe
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      className="fixed z-[97] min-w-[200px] rounded-xl overflow-hidden py-1"
+      className="lgglass lglass-strong fixed z-[97] min-w-[200px] rounded-xl overflow-hidden py-1"
       style={{
         left: pos.x,
         top: pos.y,
-        background: 'rgba(12,12,18,0.92)',
-        backdropFilter: 'blur(40px)',
-        border: '1px solid rgba(255,255,255,0.08)',
       }}
       onClick={e => e.stopPropagation()}
     >

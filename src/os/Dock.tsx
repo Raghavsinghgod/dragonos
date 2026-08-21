@@ -126,7 +126,7 @@ export default function Dock({ onOpenLauncher }: { onOpenLauncher?: () => void }
     >
       <div
         ref={dockRef}
-        className="dock-bar"
+        className="dock-bar lgglass"
       >
         {SORTED_ITEMS.map((item) => (
           <DockButton

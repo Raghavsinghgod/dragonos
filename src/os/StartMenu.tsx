@@ -111,12 +111,7 @@ export default function StartMenu({ isOpen, onClose }: StartMenuProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="fixed bottom-16 left-1/2 -translate-x-1/2 z-[99] w-[420px] max-w-[95vw] rounded-2xl overflow-hidden"
-            style={{
-              background: 'rgba(12,12,18,0.88)',
-              backdropFilter: 'blur(40px) saturate(1.5)',
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
+            className="lgglass lglass-strong fixed bottom-16 left-1/2 -translate-x-1/2 z-[99] w-[420px] max-w-[95vw] rounded-2xl overflow-hidden"
           >
             {/* Header */}
             <div className="p-5 pb-3">

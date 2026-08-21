@@ -1,8 +1,12 @@
-// DragonOS desktop widgets — draggable glass cards (clock, todo, habits, pomodoro…)
+// DragonOS desktop widgets — draggable liquid-glass cards with a manage panel.
+// Layering: widgets live BELOW windows (z 5–8) so open apps always cover them.
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { usePersist, save, load } from './persist';
-import { Clock, Calendar, CheckSquare, Target, Timer, Quote, GripVertical, X, Plus } from 'lucide-react';
+import { usePersist } from './persist';
+import {
+  Clock, Calendar, CheckSquare, Target, Timer, Quote,
+  GripVertical, X, Plus, SlidersHorizontal, RotateCcw,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 
 // ─── Widget Types ─────────────────────────────────────────
@@ -17,18 +21,23 @@ export interface WidgetConfig {
 }
 
 const defaultWidgets: WidgetConfig[] = [
-  { id: 'w-clock', type: 'clock', x: 20, y: 20, visible: true },
-  { id: 'w-date', type: 'date', x: 20, y: 180, visible: true },
-  { id: 'w-quote', type: 'quote', x: 20, y: 280, visible: true },
+  { id: 'w-clock', type: 'clock', x: 24, y: 24, visible: true },
+  { id: 'w-date', type: 'date', x: 24, y: 190, visible: true },
+  { id: 'w-quote', type: 'quote', x: 24, y: 300, visible: true },
 ];
 
-const widgetMeta: Record<WidgetType, { label: string; icon: ReactNode; defaultW: number; defaultH: number }> = {
-  clock: { label: 'Clock', icon: <Clock size={14} />, defaultW: 200, defaultH: 140 },
-  date: { label: 'Date', icon: <Calendar size={14} />, defaultW: 200, defaultH: 80 },
-  todo: { label: 'Quick Todo', icon: <CheckSquare size={14} />, defaultW: 220, defaultH: 200 },
-  habits: { label: 'Habits', icon: <Target size={14} />, defaultW: 220, defaultH: 160 },
-  pomodoro: { label: 'Pomodoro', icon: <Timer size={14} />, defaultW: 200, defaultH: 120 },
-  quote: { label: 'Quote', icon: <Quote size={14} />, defaultW: 240, defaultH: 90 },
+const widgetMeta: Record<WidgetType, {
+  label: string;
+  desc: string;
+  icon: ReactNode;
+  defaultW: number;
+}> = {
+  clock:    { label: 'Clock',     desc: 'Analog & digital time',   icon: <Clock size={14} />,       defaultW: 200 },
+  date:     { label: 'Date',      desc: 'Today at a glance',       icon: <Calendar size={14} />,    defaultW: 200 },
+  todo:     { label: 'Quick Todo',desc: 'Mini task list',          icon: <CheckSquare size={14} />, defaultW: 220 },
+  habits:   { label: 'Habits',    desc: 'Weekly streak grid',      icon: <Target size={14} />,      defaultW: 220 },
+  pomodoro: { label: 'Pomodoro',  desc: '25/5 focus timer',        icon: <Timer size={14} />,       defaultW: 200 },
+  quote:    { label: 'Quote',     desc: 'Rotating wisdom',         icon: <Quote size={14} />,       defaultW: 240 },
 };
 
 const QUOTES = [
@@ -70,9 +79,7 @@ function DraggableWidget({ config, onMove, onRemove, children }: {
     e.preventDefault();
     setDragging(true);
     const rect = dragRef.current?.getBoundingClientRect();
-    if (rect) {
-      offset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    }
+    if (rect) offset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }, []);
 
   useEffect(() => {
@@ -92,39 +99,51 @@ function DraggableWidget({ config, onMove, onRemove, children }: {
   }, [dragging, throttle, onMove]);
 
   return (
-    <div ref={dragRef}
+    <div
+      ref={dragRef}
       className="absolute select-none"
+      // Below the window layer at all times — windows start at z 11
       style={{
-        left: config.x, top: config.y,
-        zIndex: dragging ? 100 : 10,
+        left: config.x,
+        top: config.y,
+        zIndex: dragging ? 8 : 5,
         cursor: dragging ? 'grabbing' : 'default',
-      }}>
+      }}
+    >
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className="rounded-xl overflow-hidden group"
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: dragging ? 1.03 : 1 }}
+        exit={{ opacity: 0, scale: 0.92 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 26 }}
+        className="lgglass lg-sheen rounded-2xl"
         style={{
-          background: 'rgba(12,12,18,0.75)',
-          backdropFilter: 'blur(30px) saturate(1.4)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: dragging ? '0 20px 60px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.3)',
           width: widgetMeta[config.type].defaultW,
-          transition: 'box-shadow 0.3s',
-        }}>
-        <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing"
-            onMouseDown={onDragStart}>
-            <GripVertical size={10} className="text-white/20" />
-            <span className="text-[9px] text-white/25 font-inter">{widgetMeta[config.type].label}</span>
+          boxShadow: dragging
+            ? 'inset 0 1px 0 rgba(255,255,255,0.14), 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(220,38,38,0.15)'
+            : undefined,
+        }}
+      >
+        {/* Grip header — always visible so dragging is discoverable */}
+        <div className="relative flex items-center justify-between px-2.5 py-1.5 border-b border-white/[0.06] bg-white/[0.02]">
+          <div
+            className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing -my-1 py-1 pr-2"
+            onMouseDown={onDragStart}
+            title="Drag to move"
+          >
+            <GripVertical size={11} className="text-white/30" />
+            <span className="text-[9px] uppercase tracking-[0.14em] text-white/35 font-inter">
+              {widgetMeta[config.type].label}
+            </span>
           </div>
-          <button onClick={onRemove}
-            className="w-4 h-4 rounded flex items-center justify-center text-white/20 hover:text-[#dc2626] hover:bg-[#dc2626]/10 transition-colors">
-            <X size={10} />
+          <button
+            onClick={onRemove}
+            aria-label={`Remove ${widgetMeta[config.type].label} widget`}
+            className="w-5 h-5 rounded-md flex items-center justify-center text-white/25 hover:text-[#dc2626] hover:bg-[#dc2626]/10 transition-colors"
+          >
+            <X size={11} />
           </button>
         </div>
-        <div className="p-3">{children}</div>
+        <div className="relative p-3">{children}</div>
       </motion.div>
     </div>
   );
@@ -228,17 +247,18 @@ const TodoWidget = memo(function TodoWidget() {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] text-white/30 font-inter">Quick Todo</span>
+        <span className="text-[10px] text-white/30 font-inter">Progress</span>
         <span className="text-[10px] text-[#dc2626]/60 font-mono">{done}/{total}</span>
       </div>
       <div className="h-1 rounded-full bg-white/5 mb-2.5 overflow-hidden">
-        <div className="h-full rounded-full bg-[#dc2626]/60 transition-all duration-500"
+        <div className="h-full rounded-full bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] transition-all duration-500"
           style={{ width: total > 0 ? `${(done / total) * 100}%` : '0%' }} />
       </div>
       <div className="space-y-1 max-h-[100px] overflow-y-auto">
         {todos.map(t => (
           <div key={t.id} className="flex items-center gap-2 group/item">
             <button onClick={() => toggle(t.id)}
+              aria-label={t.done ? 'Mark incomplete' : 'Mark complete'}
               className={`w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-colors
                 ${t.done ? 'bg-[#dc2626] border-[#dc2626]' : 'border-white/15 hover:border-white/30'}`}>
               {t.done && <span className="text-[7px] text-white">✓</span>}
@@ -246,7 +266,7 @@ const TodoWidget = memo(function TodoWidget() {
             <span className={`text-[11px] font-inter flex-1 truncate ${t.done ? 'text-white/20 line-through' : 'text-white/50'}`}>
               {t.text}
             </span>
-            <button onClick={() => remove(t.id)}
+            <button onClick={() => remove(t.id)} aria-label="Delete task"
               className="opacity-0 group-hover/item:opacity-100 text-white/20 hover:text-[#dc2626] transition-all">
               <X size={10} />
             </button>
@@ -257,9 +277,9 @@ const TodoWidget = memo(function TodoWidget() {
         <input value={newTodo} onChange={e => setNewTodo(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && add()}
           placeholder="Add task..."
-          className="flex-1 text-[11px] bg-white/[0.04] rounded-lg px-2.5 py-1.5 text-white/60 placeholder:text-white/15 outline-none font-inter border border-white/5 focus:border-[#dc2626]/20 transition-colors" />
-        <button onClick={add}
-          className="w-7 h-7 rounded-lg bg-[#dc2626]/15 text-[#dc2626] hover:bg-[#dc2626]/25 transition-colors flex items-center justify-center text-xs">
+          className="flex-1 min-w-0 text-[11px] bg-white/[0.04] rounded-lg px-2.5 py-1.5 text-white/60 placeholder:text-white/15 outline-none font-inter border border-white/5 focus:border-[#dc2626]/20 transition-colors" />
+        <button onClick={add} aria-label="Add task"
+          className="w-7 h-7 flex-shrink-0 rounded-lg bg-[#dc2626]/15 text-[#dc2626] hover:bg-[#dc2626]/25 transition-colors flex items-center justify-center text-xs">
           +
         </button>
       </div>
@@ -290,9 +310,7 @@ const HabitsWidget = memo(function HabitsWidget() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] text-white/30 font-inter">This Week</span>
-      </div>
+      <div className="text-[10px] text-white/30 font-inter mb-2">This Week</div>
       <div className="flex gap-1 mb-1.5">
         <div className="w-14" />
         {days.map((d, i) => (
@@ -417,11 +435,11 @@ const QuoteWidget = memo(function QuoteWidget() {
 // ─── Main Widgets Component ───────────────────────────────
 export default function Widgets() {
   const [widgets, setWidgets] = usePersist<WidgetConfig[]>('widgets', defaultWidgets);
-  const [showAdd, setShowAdd] = useState(false);
+  const [showManager, setShowManager] = useState(false);
 
-  // Toggle add panel from context menu
+  // Context menu can open the manager
   useEffect(() => {
-    const handler = () => setShowAdd(prev => !prev);
+    const handler = () => setShowManager(prev => !prev);
     document.addEventListener('dragonos-toggle-widgets', handler);
     return () => document.removeEventListener('dragonos-toggle-widgets', handler);
   }, []);
@@ -431,25 +449,32 @@ export default function Widgets() {
   }, [setWidgets]);
 
   const removeWidget = useCallback((id: string) => {
-    setWidgets(prev => prev.filter(w => w.id !== id));
+    setWidgets(prev => prev.map(w => w.id === id ? { ...w, visible: false } : w));
   }, [setWidgets]);
 
-  const addWidget = useCallback((type: WidgetType) => {
-    const existing = widgets.find(w => w.type === type);
-    if (existing) {
-      // Already exists — just make visible
-      setWidgets(prev => prev.map(w => w.id === existing.id ? { ...w, visible: true } : w));
-    } else {
-      const id = `w-${type}-${Date.now()}`;
-      setWidgets(prev => [...prev, { id, type, x: 20 + prev.length * 30, y: 20 + prev.length * 30, visible: true }]);
-    }
-    setShowAdd(false);
-  }, [widgets, setWidgets]);
+  // Show/hide a widget type — adds at a sensible cascade spot when new
+  const toggleType = useCallback((type: WidgetType) => {
+    setWidgets(prev => {
+      const existing = prev.find(w => w.type === type);
+      if (existing) {
+        return prev.map(w => w.id === existing.id ? { ...w, visible: !w.visible } : w);
+      }
+      const count = prev.length;
+      return [...prev, {
+        id: `w-${type}-${Date.now()}`,
+        type,
+        x: typeof window !== 'undefined' ? Math.max(24, Math.min(window.innerWidth - 280, 24 + (count % 4) * 250)) : 24,
+        y: 24 + Math.floor(count / 4) * 220,
+        visible: true,
+      }];
+    });
+  }, [setWidgets]);
 
-  const availableTypes = useMemo(() => {
-    return Object.keys(widgetMeta) as WidgetType[];
-  }, []);
+  const resetLayout = useCallback(() => {
+    setWidgets(defaultWidgets.map(w => ({ ...w })));
+  }, [setWidgets]);
 
+  const allTypes = useMemo(() => Object.keys(widgetMeta) as WidgetType[], []);
   const visibleWidgets = useMemo(() => widgets.filter(w => w.visible), [widgets]);
 
   const widgetComponents: Record<WidgetType, React.ComponentType> = {
@@ -460,6 +485,8 @@ export default function Widgets() {
     pomodoro: PomodoroWidget,
     quote: QuoteWidget,
   };
+
+  const activeCount = visibleWidgets.length;
 
   return (
     <>
@@ -481,55 +508,87 @@ export default function Widgets() {
         })}
       </AnimatePresence>
 
-      {/* Add widget button */}
+      {/* Manager FAB */}
       <div className="fixed bottom-20 right-4 z-20">
         <button
-          onClick={() => setShowAdd(p => !p)}
-          className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-          style={{
-            background: 'rgba(12,12,18,0.75)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            color: 'rgba(255,255,255,0.4)',
-          }}
+          onClick={() => setShowManager(p => !p)}
+          aria-label="Manage widgets"
+          title="Manage widgets"
+          className="lgglass w-10 h-10 rounded-full flex items-center justify-center text-white/45 hover:text-[#dc2626] hover:shadow-[0_0_18px_rgba(220,38,38,0.25)] transition-all duration-200 active:scale-95"
         >
-          <Plus size={16} />
+          <Plus size={17} className={showManager ? 'rotate-45 transition-transform duration-200' : 'transition-transform duration-200'} />
         </button>
       </div>
 
-      {/* Add panel */}
+      {/* Manage Widgets panel */}
       <AnimatePresence>
-        {showAdd && (
+        {showManager && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: 12, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            className="fixed bottom-32 right-4 z-20 rounded-xl overflow-hidden"
-            style={{
-              background: 'rgba(12,12,18,0.9)',
-              backdropFilter: 'blur(30px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+            className="lgglass lglass-strong fixed bottom-[8.5rem] right-4 z-20 w-72 rounded-2xl"
           >
-            <p className="text-[10px] text-white/30 uppercase tracking-wider font-inter px-3 pt-3 pb-1">Add Widget</p>
-            {availableTypes.map(type => {
-              const meta = widgetMeta[type];
-              const isVisible = widgets.some(w => w.type === type && w.visible);
-              return (
-                <button
-                  key={type}
-                  onClick={() => addWidget(type)}
-                  disabled={isVisible}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors
-                    ${isVisible ? 'text-white/15 cursor-not-allowed' : 'text-white/60 hover:bg-white/5'}`}
-                >
-                  <span className="text-white/40">{meta.icon}</span>
-                  <span className="font-inter">{meta.label}</span>
-                  {isVisible && <span className="ml-auto text-[9px] text-white/20">active</span>}
-                </button>
-              );
-            })}
+            {/* Header */}
+            <div className="relative flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-white/[0.06]">
+              <div>
+                <p className="text-[11px] font-medium text-white/80 font-inter tracking-wide">Widgets</p>
+                <p className="text-[9px] text-white/30 font-inter mt-0.5">{activeCount} on desktop</p>
+              </div>
+              <button
+                onClick={() => setShowManager(false)}
+                aria-label="Close"
+                className="w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors"
+              >
+                <X size={12} />
+              </button>
+            </div>
+
+            {/* Toggle list */}
+            <div className="py-1.5">
+              {allTypes.map(type => {
+                const meta = widgetMeta[type];
+                const isOn = widgets.some(w => w.type === type && w.visible);
+                return (
+                  <button
+                    key={type}
+                    onClick={() => toggleType(type)}
+                    role="switch"
+                    aria-checked={isOn}
+                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/[0.04] transition-colors text-left"
+                  >
+                    <span className="w-7 h-7 rounded-lg bg-white/[0.05] border border-white/[0.06] flex items-center justify-center text-[#dc2626]/80 flex-shrink-0">
+                      {meta.icon}
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-[11px] text-white/70 font-inter leading-tight">{meta.label}</span>
+                      <span className="block text-[9px] text-white/30 font-inter mt-0.5">{meta.desc}</span>
+                    </span>
+                    <span className={`lg-switch ${isOn ? '' : ''}`} data-on={isOn}>
+                      <span className="lg-switch-knob" />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer actions */}
+            <div className="border-t border-white/[0.06] px-4 py-2.5 flex items-center justify-between">
+              <button
+                onClick={resetLayout}
+                className="flex items-center gap-1.5 text-[10px] text-white/35 hover:text-[#dc2626] transition-colors font-inter"
+              >
+                <RotateCcw size={10} />
+                Reset layout
+              </button>
+              <button
+                onClick={() => setShowManager(false)}
+                className="text-[10px] px-3 py-1 rounded-full bg-[#dc2626]/15 text-[#dc2626] hover:bg-[#dc2626]/25 transition-colors font-inter"
+              >
+                Done
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

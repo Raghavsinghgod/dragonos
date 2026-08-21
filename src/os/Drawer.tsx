@@ -88,12 +88,7 @@ export default function Drawer() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed right-0 top-0 bottom-0 w-[320px] max-w-[90vw] z-[97] flex flex-col overflow-y-auto"
-              style={{
-                background: 'rgba(12,12,18,0.92)',
-                backdropFilter: 'blur(40px)',
-                borderLeft: '1px solid rgba(255,255,255,0.06)',
-              }}
+              className="lgglass lglass-strong fixed right-0 top-0 bottom-0 w-[320px] max-w-[90vw] z-[97] flex flex-col overflow-y-auto border-l border-white/[0.06]"
             >
               {/* Clock */}
               <div className="p-6 text-center">

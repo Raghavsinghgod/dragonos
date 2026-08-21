@@ -89,12 +89,7 @@ export default function CommandPalette() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-            className="fixed top-[20%] left-1/2 -translate-x-1/2 z-[101] w-[480px] max-w-[95vw] rounded-xl overflow-hidden"
-            style={{
-              background: 'rgba(12,12,18,0.95)',
-              backdropFilter: 'blur(40px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
+            className="lgglass lglass-strong fixed top-[20%] left-1/2 -translate-x-1/2 z-[101] w-[480px] max-w-[95vw] rounded-xl overflow-hidden"
           >
             {/* Input */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">

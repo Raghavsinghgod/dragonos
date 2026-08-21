@@ -139,14 +139,11 @@ const WindowFrame = memo(function WindowFrame({ win }: { win: WindowState }) {
       }}
       exit={{ opacity: 0, scale: 0.85, filter: 'blur(12px)' }}
       transition={{ type: 'spring', stiffness: 300, damping: 30, filter: { duration: 0.3 } }}
-      className="absolute flex flex-col rounded-xl overflow-hidden shadow-2xl"
+      className="lgglass absolute flex flex-col rounded-xl overflow-hidden"
       style={{
         zIndex: win.zIndex,
         top: win.maximized ? 0 : undefined,
         left: win.maximized ? 0 : undefined,
-        background: 'rgba(12,12,18,0.88)',
-        backdropFilter: 'blur(40px) saturate(1.5)',
-        border: state.desktop.wallpaperTheme === 'dragon' ? '1px solid rgba(220,38,38,0.15)' : '1px solid rgba(255,255,255,0.08)',
       }}
       onMouseDown={handleFocus}
     >
@@ -200,15 +197,13 @@ const WindowCloseFrame = memo(function WindowCloseFrame({ win }: { win: WindowSt
       initial={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
       animate={{ opacity: 0, scale: 0.85, filter: 'blur(12px)' }}
       transition={{ duration: 0.25 }}
-      className="absolute flex flex-col rounded-xl overflow-hidden"
+      className="lgglass absolute flex flex-col rounded-xl overflow-hidden"
       style={{
         zIndex: win.zIndex,
         top: win.y,
         left: win.x,
         width: win.width,
         height: win.height,
-        background: 'rgba(12,12,18,0.88)',
-        backdropFilter: 'blur(40px)',
       }}
     />
   );

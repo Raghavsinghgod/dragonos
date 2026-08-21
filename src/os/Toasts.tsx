@@ -24,7 +24,7 @@ const TYPE_ICONS: Record<string, ReactNode> = {
 const ToastItem = memo(function ToastItem({ toast }: { toast: { id: string; title: string; message: string; type: string } }) {
   return (
     <div
-      className={`toast-item max-w-[300px] rounded-lg px-4 py-3 border-l-4 ${TYPE_COLORS[toast.type] || TYPE_COLORS.info}`}
+      className={`toast-item lgglass max-w-[300px] rounded-lg px-4 py-3 border-l-4 ${TYPE_COLORS[toast.type] || TYPE_COLORS.info}`}
     >
       <div className="flex items-start gap-2">
         <span className="mt-0.5 flex-shrink-0">{TYPE_ICONS[toast.type]}</span>

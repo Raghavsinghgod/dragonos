@@ -91,7 +91,7 @@
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -111,7 +111,7 @@
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.205 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
@@ -130,7 +130,7 @@
   }
 }
 
-/* DragonOS Landing Page Animations */
+/* ═══ DragonOS theme animations ═══ */
 @keyframes dragonFloat {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-12px); }
@@ -220,9 +220,7 @@
 .animate-terminalBlink { animation: terminalBlink 1s step-end infinite; }
 .animate-slideUp { animation: slideUp 0.6s ease-out forwards; }
 
-/* ═══ DragonOS Optimized Animations ═══ */
-
-/* Stars — replaces 50 framer-motion instances */
+/* ═══ Wallpaper particles — pure CSS ═══ */
 .star {
   position: absolute;
   border-radius: 50%;
@@ -236,7 +234,6 @@
   50% { opacity: 0.5; }
 }
 
-/* Embers — replaces 10 framer-motion instances */
 .ember {
   position: absolute;
   border-radius: 50%;
@@ -251,7 +248,6 @@
   100% { transform: translateY(-350px) translateX(25px); opacity: 0; }
 }
 
-/* Dragon float — replaces framer-motion animate */
 .dragon-float {
   animation: dragonWallpaperFloat 6s ease-in-out infinite;
   transition: transform 0.15s ease-out;
@@ -261,87 +257,95 @@
   50% { transform: translate(-50%, -50%) translateY(-5px); }
 }
 
-/* Boot sequence — CSS-only animations */
-.boot-dragon {
-  animation: bootDragonIn 0.6s ease-out forwards;
-}
-@keyframes bootDragonIn {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
-}
-.boot-glow-pulse {
-  animation: bootGlowPulse 2s ease-in-out infinite;
-}
-@keyframes bootGlowPulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.7; }
-}
-.boot-spinner {
-  width: 40px;
-  height: 40px;
-  border: 2px solid transparent;
-  border-top: 2px solid #dc2626;
-  border-radius: 50%;
-  animation: bootSpin 1s linear infinite;
+/* ═══ Liquid Glass — shared material for panels, cards & controls ═══ */
+.lglass {
   position: relative;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.085) 0%, rgba(255,255,255,0.02) 35%, rgba(220,38,38,0.03) 70%, rgba(255,255,255,0.05) 100%),
+    rgba(10,10,16,0.58);
+  backdrop-filter: blur(30px) saturate(1.8);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    inset 0 -1px 0 rgba(255,255,255,0.03),
+    0 14px 44px rgba(0,0,0,0.5),
+    0 3px 10px rgba(0,0,0,0.32);
 }
-.boot-spinner::after {
+
+/* Bright rim catching light along the top-left curve, crimson at the tail */
+.lglass::before {
   content: '';
   position: absolute;
-  inset: 4px;
-  border: 2px solid transparent;
-  border-top: 2px solid rgba(220,38,38,0.5);
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.38) 0%,
+    rgba(255,255,255,0.08) 28%,
+    rgba(255,255,255,0.02) 50%,
+    rgba(220,38,38,0.18) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* More opaque sibling for text-heavy surfaces (menus, palette) */
+.lglass-strong {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0.04) 100%),
+    rgba(9,9,14,0.82);
+  backdrop-filter: blur(36px) saturate(1.7);
+  -webkit-backdrop-filter: blur(36px) saturate(1.7);
+}
+
+/* Specular sheen sweeping across on hover — transform-only, GPU cheap */
+.lg-sheen { overflow: hidden; }
+.lg-sheen::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -80%;
+  width: 60%;
+  height: 220%;
+  background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.09) 45%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.09) 55%, transparent 100%);
+  transform: translateX(-120%) rotate(8deg);
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.lg-sheen:hover::after { transform: translateX(480%) rotate(8deg); }
+
+/* Premium iOS-style toggle */
+.lg-switch {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.09);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.06);
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+}
+.lg-switch[data-on='true'] {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.25), 0 0 10px rgba(220,38,38,0.4);
+}
+.lg-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  animation: bootSpinReverse 1.5s linear infinite;
+  background: linear-gradient(180deg, #ffffff, #d4d4d8);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-@keyframes bootSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes bootSpinReverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-.boot-fade-out {
-  animation: bootFadeIn 0.3s ease-out;
-}
-@keyframes bootFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+.lg-switch[data-on='true'] .lg-switch-knob { transform: translateX(14px); }
 
-/* Boot v2 — cinematic 4s auto-boot */
-.boot-enter { animation: bootFadeIn 0.4s ease-out; }
-.boot-exit { animation: bootExit 0.35s ease-in forwards; }
-@keyframes bootExit {
-  to { opacity: 0; transform: scale(1.04); filter: blur(6px); }
-}
-.boot-backdrop {
-  opacity: 0;
-  animation: bootBackdropIn 1.2s ease-out forwards, bootKenBurns 8s ease-out forwards;
-}
-@keyframes bootBackdropIn {
-  to { opacity: 0.9; }
-}
-@keyframes bootKenBurns {
-  from { transform: scale(1.12); }
-  to { transform: scale(1); }
-}
-.boot-wordmark {
-  opacity: 0;
-  animation: bootWordmarkIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards;
-}
-@keyframes bootWordmarkIn {
-  from { opacity: 0; transform: translateY(10px); letter-spacing: 0.7em; }
-  to { opacity: 1; transform: translateY(0); letter-spacing: 0.45em; }
-}
-.boot-progress {
-  width: 0%;
-  animation: bootProgressFill 4s linear forwards;
-}
-@keyframes bootProgressFill {
-  from { width: 0%; }
-  to { width: 100%; }
-}
-
-/* Toasts — CSS slide-in replacing framer-motion */
+/* Toasts — CSS slide-in */
 .toast-item {
-  background: rgba(12,12,18,0.92);
-  backdrop-filter: blur(20px);
   animation: toastSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
              toastFadeOut 0.3s ease-in 2.7s forwards;
 }
@@ -388,16 +392,13 @@
   to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
-/* Dock — optimized transitions */
+/* Dock — liquid glass bar */
 .dock-bar {
   display: flex;
   align-items: flex-end;
   gap: 4px;
   padding: 6px 12px 8px;
-  border-radius: 16px;
-  background: rgba(12,12,18,0.6);
-  backdrop-filter: blur(48px);
-  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px;
 }
 .dock-item {
   display: flex;
@@ -429,19 +430,70 @@
 }
 .dock-tooltip {
   position: absolute;
-  top: -32px;
-  padding: 2px 8px;
-  border-radius: 4px;
+  top: -34px;
+  padding: 3px 10px;
+  border-radius: 7px;
   font-size: 10px;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.85);
   font-family: var(--font-inter);
   white-space: nowrap;
-  background: rgba(12,12,18,0.9);
-  border: 1px solid rgba(255,255,255,0.08);
   animation: tooltipFadeIn 0.15s ease-out;
   pointer-events: none;
 }
 @keyframes tooltipFadeIn {
   from { opacity: 0; transform: translateX(-50%) translateY(4px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ═══ Boot — macOS-style, dragon-marked, 2 seconds ═══ */
+.boot-enter { animation: bootFadeIn 0.3s ease-out; }
+.boot-exit { animation: bootExit 0.3s ease-in forwards; }
+@keyframes bootExit {
+  to { opacity: 0; filter: blur(4px); }
+}
+@keyframes bootFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* The real dragon photo, framed as a glowing centered emblem */
+.boot-emblem {
+  width: min(300px, 62vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background-image: url('/dragon-wallpaper.jpg');
+  background-size: 300%;
+  background-position: 48.5% 45%;
+  filter: drop-shadow(0 0 46px rgba(220,38,38,0.28));
+  -webkit-mask-image: radial-gradient(circle, black 52%, transparent 71%);
+  mask-image: radial-gradient(circle, black 52%, transparent 71%);
+  animation: bootEmblemIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+             bootEmblemBreathe 3.2s ease-in-out 0.8s infinite;
+}
+@keyframes bootEmblemIn {
+  from { opacity: 0; transform: scale(0.86); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes bootEmblemBreathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 46px rgba(220,38,38,0.28)); }
+  50% { transform: scale(1.025); filter: drop-shadow(0 0 66px rgba(220,38,38,0.42)); }
+}
+
+.boot-wordmark {
+  opacity: 0;
+  animation: bootWordmarkIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.35s forwards;
+}
+@keyframes bootWordmarkIn {
+  from { opacity: 0; transform: translateY(8px); letter-spacing: 0.65em; }
+  to { opacity: 1; transform: translateY(0); letter-spacing: 0.45em; }
+}
+
+/* Progress rail synced to the 2s timer */
+.boot-progress {
+  width: 0%;
+  animation: bootProgressFill 2s linear forwards;
+}
+@keyframes bootProgressFill {
+  from { width: 0%; }
+  to { width: 100%; }
 }
