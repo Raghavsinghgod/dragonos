@@ -1,6 +1,4 @@
-// DragonOS Toast Notifications - Optimized with CSS transitions
-// OPTIMIZED: CSS transitions instead of framer-motion AnimatePresence,
-// lightweight icons, split context for minimal re-renders
+// DragonOS toasts — color-coded notifications with CSS transitions
 import { memo } from 'react';
 import { useToasts } from './context';
 import { Info, CheckCircle, XCircle, AlertTriangle, Trophy } from 'lucide-react';

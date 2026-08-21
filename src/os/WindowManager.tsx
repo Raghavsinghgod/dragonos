@@ -1,6 +1,4 @@
-// DragonOS Window Manager - Optimized floating windows
-// OPTIMIZED: RAF-throttled drag/resize, React.memo windows,
-// memoized app component registry, split context for minimal re-renders
+// DragonOS window manager — draggable, resizable windows with edge snapping
 import { useCallback, useRef, useState, useEffect, memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS, useWindows } from './context';

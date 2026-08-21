@@ -1,8 +1,7 @@
-// DragonOS Dock - Optimized Apple-style magnification
-// OPTIMIZED: CSS-driven magnification via transform, React.memo dock items,
-// memoized computations, zero unnecessary re-renders
+// DragonOS dock — Apple-style magnification bar with running-app indicators
 import { memo, useMemo, useCallback, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LayoutGrid } from 'lucide-react';
 import { useOS, useWindows } from './context';
 import { sounds } from './sounds';
 import { appIcons } from './icons';
@@ -74,7 +73,7 @@ const DockButton = memo(function DockButton({
   );
 });
 
-export default function Dock() {
+export default function Dock({ onOpenLauncher }: { onOpenLauncher?: () => void }) {
   const openApp = useOS().openApp;
   const windows = useWindows();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -141,6 +140,17 @@ export default function Dock() {
             onOpen={handleOpen}
           />
         ))}
+
+        {/* Launcher — separator + grid button, macOS Launchpad style */}
+        <div className="mx-1 h-9 w-px self-center bg-white/15" aria-hidden="true" />
+        <button
+          onMouseUp={() => { sounds.click(); onOpenLauncher?.(); }}
+          className="dock-btn group"
+          title="Launchpad"
+          aria-label="Open Launchpad"
+        >
+          <LayoutGrid className="w-7 h-7 md:w-8 md:h-8 text-white/70 transition-all duration-200 group-hover:text-white group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_rgba(220,38,38,0.5)]" />
+        </button>
 
         {/* Tooltip */}
         <AnimatePresence>

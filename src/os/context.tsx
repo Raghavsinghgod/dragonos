@@ -1,5 +1,5 @@
-// DragonOS Context - Optimized with fine-grained context splitting
-// Separate contexts prevent unnecessary re-renders when only part of state changes
+// DragonOS global state — split into fine-grained contexts so components only
+// re-render when the slice they actually use changes
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useMemo } from 'react';
 import { save, load } from './persist';
 import type { WindowState, Toast, DesktopState } from './types';

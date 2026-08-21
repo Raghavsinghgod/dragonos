@@ -1,5 +1,4 @@
-// DragonOS Desktop Icons - Optimized gradient tiles
-// OPTIMIZED: Memoized callbacks, memo icon items, split context
+// DragonOS desktop icons — gradient app tiles with select/open behavior
 import { useState, useCallback, memo } from 'react';
 import { motion } from 'framer-motion';
 import { useOS } from './context';

@@ -1,5 +1,4 @@
-// DragonOS Context Menu - Optimized
-// OPTIMIZED: Memoized callbacks, split context, stable menu items
+// DragonOS desktop right-click menu
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS, useDesktop } from './context';

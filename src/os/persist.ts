@@ -1,4 +1,4 @@
-// DragonOS Persistence Layer - Optimized localStorage with debounced saves
+// localStorage persistence hook with debounced writes
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const PREFIX = 'dragonos.';

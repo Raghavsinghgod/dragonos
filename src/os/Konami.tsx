@@ -1,5 +1,4 @@
-// DragonOS Konami Code Easter Egg - Optimized
-// OPTIMIZED: Pre-computed particles, lightweight DOM
+// DragonOS easter egg — Konami code triggers confetti rain + fanfare
 import { useEffect, useState, useCallback } from 'react';
 import { sounds } from './sounds';
 

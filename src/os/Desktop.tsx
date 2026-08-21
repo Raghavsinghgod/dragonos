@@ -1,6 +1,5 @@
-// DragonOS Desktop - Optimized main orchestrator
-// OPTIMIZED: Split context hooks, memoized handlers, lazy component mounting
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+// DragonOS desktop — root orchestrator that assembles the shell
+import { useState, useEffect, useCallback } from 'react';
 import { useOS, useDesktop } from './context';
 import { initApps } from './apps';
 import BootSequence from './BootSequence';
@@ -16,9 +15,6 @@ import SleepMode from './SleepMode';
 import Toasts from './Toasts';
 import KonamiCode from './Konami';
 import Widgets from './Widgets';
-
-// Lazy-load heavy components that aren't needed at boot
-// (Toasts, KonamiCode, Widgets only render after boot anyway)
 
 const BOOTED_APPS = [
   'dashboard', 'notepad', 'todo', 'calendar', 'terminal', 'calculator', 'clock',
@@ -57,7 +53,6 @@ export default function Desktop() {
     return () => document.removeEventListener('dragonos-open-app-by-name', handler);
   }, [openApp]);
 
-  const toggleStartMenu = useCallback(() => setStartMenuOpen(prev => !prev), []);
   const closeStartMenu = useCallback(() => setStartMenuOpen(false), []);
   const openSettings = useCallback(() => openApp('settings'), [openApp]);
   const openLaunchpad = useCallback(() => setStartMenuOpen(true), []);
@@ -81,11 +76,7 @@ export default function Desktop() {
       {showDesktop && <WindowManager />}
 
       {/* Dock */}
-      {showDesktop && (
-        <div onClick={toggleStartMenu}>
-          <Dock />
-        </div>
-      )}
+      {showDesktop && <Dock onOpenLauncher={openLaunchpad} />}
 
       {/* Start Menu */}
       <StartMenu isOpen={startMenuOpen} onClose={closeStartMenu} />

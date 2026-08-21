@@ -1,6 +1,4 @@
-// DragonOS Start Menu - Optimized searchable app launcher
-// OPTIMIZED: Memoized search filter, conditional pinned/all rendering,
-// split context, stable event handlers
+// DragonOS start menu — searchable launcher with pinned apps and greeting
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS, useDesktop } from './context';

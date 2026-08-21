@@ -1,5 +1,4 @@
-// DragonOS Drawer - Optimized right-edge slide-in panel
-// OPTIMIZED: Memoized callbacks, split context, conditional rendering
+// DragonOS drawer — right-edge panel with clock, quick actions and notes
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS, useDesktop } from './context';

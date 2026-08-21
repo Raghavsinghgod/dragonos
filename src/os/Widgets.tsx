@@ -1,6 +1,4 @@
-// DragonOS Desktop Widgets - Optimized
-// OPTIMIZED: React.memo all widgets, RAF-throttled drag, memoized computations,
-// debounced localStorage, split context
+// DragonOS desktop widgets — draggable glass cards (clock, todo, habits, pomodoro…)
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePersist, save, load } from './persist';

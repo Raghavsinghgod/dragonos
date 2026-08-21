@@ -1,4 +1,4 @@
-// DragonOS Sound Engine - Optimized WebAudio API with lazy init and debouncing
+// WebAudio sound engine — lazily initialized, rate-limited UI blips
 let audioCtx: AudioContext | null = null;
 
 function getCtx(): AudioContext {

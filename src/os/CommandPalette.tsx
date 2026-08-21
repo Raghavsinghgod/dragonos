@@ -1,5 +1,4 @@
-// DragonOS Command Palette - Optimized Ctrl+K fuzzy search
-// OPTIMIZED: Memoized search, keyboard arrow navigation, split context
+// DragonOS command palette — Ctrl+K fuzzy app search with keyboard navigation
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS } from './context';

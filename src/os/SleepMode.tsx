@@ -1,5 +1,4 @@
-// DragonOS Sleep Mode - Optimized
-// OPTIMIZED: Lightweight interval, direct text updates
+// DragonOS sleep mode — fades to a live clock; click or key to wake
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOS, useDesktop } from './context';
