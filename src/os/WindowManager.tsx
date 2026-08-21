@@ -144,7 +144,7 @@ const WindowFrame = memo(function WindowFrame({ win }: { win: WindowState }) {
           ? { duration: 0.28, ease: [0.4, 0, 1, 1] }
           : { type: 'spring', stiffness: 340, damping: 24, filter: { duration: 0.35 } }
       }
-      className="lgglass absolute flex flex-col rounded-xl overflow-hidden pointer-events-auto"
+      className="win-glass absolute flex flex-col rounded-xl overflow-hidden pointer-events-auto"
       style={{
         zIndex: win.zIndex,
         top: win.maximized ? 0 : win.y,

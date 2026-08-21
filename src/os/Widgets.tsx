@@ -128,7 +128,7 @@ function DraggableWidget({ config, onMove, onRemove, children }: {
         animate={{ opacity: 1, scale: dragging ? 1.03 : 1 }}
         exit={{ opacity: 0, scale: 0.92 }}
         transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-        className="lgglass lg-sheen rounded-2xl cursor-grab active:cursor-grabbing"
+        className="lgglass rounded-2xl cursor-grab active:cursor-grabbing"
         onMouseDown={onDragStart}
         style={{
           width: widgetMeta[config.type].defaultW,
