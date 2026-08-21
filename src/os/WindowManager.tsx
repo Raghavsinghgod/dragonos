@@ -1,6 +1,6 @@
 // DragonOS window manager — draggable, resizable windows with edge snapping
 import { useCallback, useRef, useState, useEffect, memo, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useOS, useWindows } from './context';
 import { sounds } from './sounds';
 import type { WindowState } from './types';
@@ -28,7 +28,7 @@ function useRafThrottle() {
 
 // ─── WindowFrame — Memoized, RAF-throttled drag/resize ────
 const WindowFrame = memo(function WindowFrame({ win }: { win: WindowState }) {
-  const { state, dispatch, closeApp } = useOS();
+  const { dispatch, closeApp } = useOS();
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, wx: 0, wy: 0 });
   const rafThrottle = useRafThrottle();
@@ -127,23 +127,31 @@ const WindowFrame = memo(function WindowFrame({ win }: { win: WindowState }) {
     ne: 'cursor-ne-resize', nw: 'cursor-nw-resize', se: 'cursor-se-resize', sw: 'cursor-sw-resize',
   };
 
+  const isClosing = win.animState === 'closing';
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9, filter: 'blur(12px)' }}
-      animate={{
-        opacity: 1, scale: 1, filter: 'blur(0px)',
-        x: win.maximized ? 0 : win.x,
-        y: win.maximized ? 0 : win.y,
-        width: win.maximized ? '100vw' : win.width,
-        height: win.maximized ? 'calc(100vh - 80px)' : win.height,
-      }}
-      exit={{ opacity: 0, scale: 0.85, filter: 'blur(12px)' }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30, filter: { duration: 0.3 } }}
-      className="lgglass absolute flex flex-col rounded-xl overflow-hidden"
+      /* Open: expands up from near the dock with a blur-to-sharp spring.
+         Close: the whole window — content included — shrinks back into the blur. */
+      initial={{ opacity: 0, scale: 0.82, filter: 'blur(18px)' }}
+      animate={
+        isClosing
+          ? { opacity: 0, scale: 0.78, filter: 'blur(16px)' }
+          : { opacity: 1, scale: 1, filter: 'blur(0px)' }
+      }
+      transition={
+        isClosing
+          ? { duration: 0.28, ease: [0.4, 0, 1, 1] }
+          : { type: 'spring', stiffness: 340, damping: 24, filter: { duration: 0.35 } }
+      }
+      className="lgglass absolute flex flex-col rounded-xl overflow-hidden pointer-events-auto"
       style={{
         zIndex: win.zIndex,
-        top: win.maximized ? 0 : undefined,
-        left: win.maximized ? 0 : undefined,
+        top: win.maximized ? 0 : win.y,
+        left: win.maximized ? 0 : win.x,
+        width: win.maximized ? '100vw' : win.width,
+        height: win.maximized ? 'calc(100vh - 80px)' : win.height,
+        transformOrigin: '50% 85%',
       }}
       onMouseDown={handleFocus}
     >
@@ -190,30 +198,11 @@ const WindowFrame = memo(function WindowFrame({ win }: { win: WindowState }) {
   );
 });
 
-// ─── Closing animation frame — lightweight ─────────────────
-const WindowCloseFrame = memo(function WindowCloseFrame({ win }: { win: WindowState }) {
-  return (
-    <motion.div
-      initial={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-      animate={{ opacity: 0, scale: 0.85, filter: 'blur(12px)' }}
-      transition={{ duration: 0.25 }}
-      className="lgglass absolute flex flex-col rounded-xl overflow-hidden"
-      style={{
-        zIndex: win.zIndex,
-        top: win.y,
-        left: win.x,
-        width: win.width,
-        height: win.height,
-      }}
-    />
-  );
-});
-
 // ─── Main WindowManager — only re-renders on windows change ──
 export default function WindowManager() {
   const windows = useWindows();
 
-  // Memoize open windows list
+  // Open windows (closing ones stay until their exit animation finishes)
   const openWindows = useMemo(
     () => Object.values(windows).filter(w => w.isOpen),
     [windows]
@@ -221,17 +210,9 @@ export default function WindowManager() {
 
   return (
     <div className="fixed inset-0 z-10 pointer-events-none">
-      <AnimatePresence>
-        {openWindows.map(win => (
-          <div key={win.id} className="pointer-events-auto">
-            {win.animState !== 'closing' ? (
-              <WindowFrame win={win} />
-            ) : (
-              <WindowCloseFrame win={win} />
-            )}
-          </div>
-        ))}
-      </AnimatePresence>
+      {openWindows.map(win => (
+        <WindowFrame key={win.id} win={win} />
+      ))}
     </div>
   );
 }

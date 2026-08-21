@@ -23,6 +23,7 @@ type OSAction =
   | { type: 'SET_WALLPAPER'; theme: string }
   | { type: 'OPEN_WINDOW'; windowId: string; appId: string; title: string; icon: React.ReactNode; width: number; height: number; minWidth: number; minHeight: number }
   | { type: 'CLOSE_WINDOW'; windowId: string }
+  | { type: 'REMOVE_WINDOW'; windowId: string }
   | { type: 'MINIMIZE_WINDOW'; windowId: string }
   | { type: 'MAXIMIZE_WINDOW'; windowId: string }
   | { type: 'RESTORE_WINDOW'; windowId: string }
@@ -67,7 +68,7 @@ function osReducer(state: OSState, action: OSAction): OSState {
       return { ...state, desktop: { ...state.desktop, wallpaperTheme: action.theme } };
     case 'OPEN_WINDOW': {
       const existing = state.windows[action.windowId];
-      if (existing && existing.isOpen && !existing.minimized) {
+      if (existing && existing.isOpen && !existing.minimized && existing.animState !== 'closing') {
         return osReducer(state, { type: 'FOCUS_WINDOW', windowId: action.windowId });
       }
       if (existing && existing.minimized) {
@@ -107,6 +108,17 @@ function osReducer(state: OSState, action: OSAction): OSState {
           ...state.windows,
           [action.windowId]: { ...win, animState: 'closing' },
         },
+      };
+    }
+    case 'REMOVE_WINDOW': {
+      const win = state.windows[action.windowId];
+      if (!win) return state;
+      const windows = { ...state.windows };
+      delete windows[action.windowId];
+      return {
+        ...state,
+        windows,
+        windowOrder: state.windowOrder.filter(id => id !== action.windowId),
       };
     }
     case 'MINIMIZE_WINDOW': {
@@ -396,7 +408,9 @@ export function OSProvider({ children }: { children: React.ReactNode }) {
   }, [dispatch]);
 
   const closeApp = useCallback((windowId: string) => {
+    // Play the closing animation, then drop the window from state entirely
     dispatch({ type: 'CLOSE_WINDOW', windowId });
+    setTimeout(() => dispatch({ type: 'REMOVE_WINDOW', windowId }), 320);
   }, [dispatch]);
 
   const addToast = useCallback((title: string, message: string, type: Toast['type'] = 'info') => {

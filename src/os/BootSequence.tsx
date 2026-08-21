@@ -14,14 +14,15 @@ export default function BootSequence() {
   useEffect(() => {
     if (state.desktop.booted) return;
 
-    const finish = useCallback(() => {
+    // Plain function — hooks must never be called inside effects
+    const finish = () => {
       if (bootedRef.current) return;
       bootedRef.current = true;
       setLeaving(true);
       try { sounds.boot(); } catch { /* */ }
       // Hand off to the desktop mid-fade for a seamless transition
       setTimeout(() => dispatch({ type: 'BOOT' }), 280);
-    }, [dispatch]);
+    };
 
     const t = setTimeout(finish, BOOT_DURATION);
     return () => clearTimeout(t);
