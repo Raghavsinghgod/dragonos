@@ -1,7 +1,7 @@
 // DragonOS desktop — root orchestrator that assembles the shell
 import { useState, useEffect, useCallback } from 'react';
 import { useOS, useDesktop } from '@/state/os/providers';
-import { initApps } from '@/applications';
+import { initApps, prefetchApps } from '@/applications';
 import BootGate from '@/system/boot/BootGate';
 import DesktopBackdrop from '@/system/desktop/DesktopBackdrop';
 import WindowField from '@/system/windowing/WindowField';
@@ -56,6 +56,12 @@ export default function DesktopStage() {
   const openLaunchpad = useCallback(() => setStartMenuOpen(true), []);
 
   const showDesktop = desktop.booted;
+
+  // Warm app chunks once the desktop is visible — never during boot,
+  // so the wallpaper and boot animation get the connection first
+  useEffect(() => {
+    if (showDesktop) prefetchApps();
+  }, [showDesktop]);
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-[#050508]">

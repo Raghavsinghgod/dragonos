@@ -1,5 +1,5 @@
 // DragonOS window manager — draggable, resizable windows with edge snapping
-import { useCallback, useRef, useState, useEffect, memo, useMemo } from 'react';
+import { useCallback, useRef, useState, useEffect, memo, useMemo, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useOS, useWindows } from '@/state/os/providers';
 import { sounds } from '@/lib/audio/cues';
@@ -10,6 +10,15 @@ let appComponents: Record<string, React.ComponentType<{ windowId: string }>> = {
 
 export function setAppComponents(components: Record<string, React.ComponentType<{ windowId: string }>>) {
   appComponents = components;
+}
+
+// Apps load as separate chunks — this is what shows while a chunk streams in
+function WindowLoader() {
+  return (
+    <div className="h-full w-full grid place-items-center">
+      <div className="w-6 h-6 rounded-full border-2 border-[#dc2626]/25 border-t-[#dc2626] animate-spin" />
+    </div>
+  );
 }
 
 // ─── RAF throttle helper ──────────────────────────────────
@@ -175,7 +184,11 @@ const WindowFrame = memo(function WindowFrame({ win }: { win: WindowState }) {
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        {AppComponent && <AppComponent windowId={win.id} />}
+        {AppComponent && (
+          <Suspense fallback={<WindowLoader />}>
+            <AppComponent windowId={win.id} />
+          </Suspense>
+        )}
       </div>
 
       {/* 8-direction resize handles */}

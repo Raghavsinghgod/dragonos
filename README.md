@@ -76,6 +76,7 @@ src/
 - Window/widget drag and resize are **RAF-throttled** with positions applied as plain styles (no tween lag)
 - Hot leaves (`DockButton`, `ToastItem`, every widget) are `React.memo`; handlers are `useCallback`-stable
 - Sounds are synthesized with WebAudio (no audio files), lazily initialized and rate-limited
+- **Every app is its own lazy chunk** (`React.lazy` + dynamic import): the shell ships without any app code, windows show a small crimson spinner while a chunk streams in, and `prefetchApps()` warms all 28 chunks via `requestIdleCallback` right after boot — first open feels as fast as every open after
 
 ---
 
@@ -116,7 +117,7 @@ bun run lint       # eslint
 
 ### Conventions
 
-- New apps: create `src/applications/my-app/my-app.app.tsx`, import it and register it in `src/applications/index.ts`, add its icon in `src/ui/icons/icon-map.tsx`
+- New apps: create `src/applications/my-app/my-app.app.tsx`, add one loader line **and** one registry row in `src/applications/index.ts` (apps load lazily from that table — don't import app components anywhere else), add its icon in `src/ui/icons/icon-map.tsx`
 - Persisted data: `usePersist<T>('my-key', fallback)` from `@/state/persistence/local-storage` — keys are namespaced automatically
 - Theming: black `#050508`, crimson `#dc2626`, glass via `.lgglass` / `.win-glass`, fonts `font-display` (Cinzel), `font-inter`, `font-mono` (JetBrains Mono), `font-caveat`
 

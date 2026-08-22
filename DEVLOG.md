@@ -120,6 +120,18 @@ Running total of this project's guiding principle: most features are finished no
 
 ---
 
+## Entry 12 — Twenty-eight apps, one suitcase
+
+The build log told on me: every app rode to first paint in a single 333KB chunk. Open the Calculator, pay for the Markdown editor, the vault, the mood runes — all of it parsed before the wallpaper even loaded. A real OS doesn't load every program into RAM at boot; why should mine?
+
+Fix was boring on purpose, which is how you know it's right. `React.lazy` per app, one dynamic import table that's now the only place an app's path exists, and a coin-sized crimson spinner in the window frame for the milliseconds a chunk streams in. The subtle part was making the *first* open feel like the rest: `requestIdleCallback` warms all twenty-eight chunks right after boot finishes, off the critical path, so nobody ever sees the spinner unless they click faster than their connection.
+
+Main bundle: 261KB (was 333). Each app now travels alone at 2–6KB. And I nearly broke everything with the wrapper div I added around window content to "help" layouts fill space — `h-full` resolves against its parent, and my helpful wrapper had no height. Reverted to rendering apps exactly where they lived before; Suspense adds no DOM node, so nothing moved.
+
+Rule of thumb I keep relearning: when optimizing, change as little structure as possible. The fastest code is the code that loads without asking anyone to rearrange their DOM.
+
+---
+
 ## Where it stands
 
 Boots in two seconds. Twenty-eight apps, six draggable widgets, a dock with gaussian physics, keyboard shortcuts, a command palette, sleep mode, a konami code, synthesized UI sounds, and a wallpaper of an actual dragon on actual leather. All client-side, all offline, all persisted.
