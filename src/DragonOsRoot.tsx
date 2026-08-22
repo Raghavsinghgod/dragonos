@@ -2,6 +2,7 @@
 // you get a readable crash card instead of a black screen.
 import { Component, type ReactNode } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
+import { OSProvider } from '@/state/os/providers';
 import DesktopStage from '@/system/desktop/DesktopStage';
 import NotFoundRoute from '@/system/desktop/NotFoundRoute';
 
@@ -43,11 +44,13 @@ export default function DragonOsRoot() {
   return (
     <RootBoundary>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<DesktopStage />} />
-          <Route path="/dashboard" element={<DesktopStage />} />
-          <Route path="*" element={<NotFoundRoute />} />
-        </Routes>
+        <OSProvider>
+          <Routes>
+            <Route path="/" element={<DesktopStage />} />
+            <Route path="/dashboard" element={<DesktopStage />} />
+            <Route path="*" element={<NotFoundRoute />} />
+          </Routes>
+        </OSProvider>
       </BrowserRouter>
     </RootBoundary>
   );
