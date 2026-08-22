@@ -14,30 +14,30 @@
   <rect width="512" height="512" rx="110" fill="#050508"/>
   <rect width="512" height="512" fill="url(#halo)"/>
 
-  <!-- coiled body -->
+
   <path d="M150 398c-34-50-10-102 52-118 74-19 116-52 116-102 0-40-30-68-70-74"
         fill="none" stroke="url(#body)" stroke-width="40" stroke-linecap="round"/>
 
-  <!-- tail flick -->
+
   <path d="M150 398c-8 16-26 24-44 20"
         fill="none" stroke="url(#body)" stroke-width="24" stroke-linecap="round"/>
 
-  <!-- claw -->
+
   <path d="M252 330l26 18M262 306l28 12M236 350l22 22"
         stroke="#dc2626" stroke-width="12" stroke-linecap="round" opacity=".75"/>
 
-  <!-- head -->
+
   <path d="M248 96c-46-12-88 6-100 44-4 13-2 24 5 32l62-9 46 24c19-17 26-43 17-66z" fill="url(#body)"/>
 
-  <!-- horns -->
+
   <path d="M270 90l32-56 9 62z" fill="url(#body)"/>
   <path d="M218 82l-20-52 44 38z" fill="url(#body)"/>
 
-  <!-- eye -->
+
   <circle cx="202" cy="140" r="11" fill="#050508"/>
   <circle cx="205" cy="137" r="3.5" fill="#fca5a5" opacity=".85"/>
 
-  <!-- whisker -->
+
   <path d="M162 178c-28 10-48 32-54 58"
         fill="none" stroke="#dc2626" stroke-width="10" stroke-linecap="round" opacity=".7"/>
 </svg>
