@@ -5,7 +5,7 @@ import { initApps, prefetchApps } from '@/applications';
 import BootGate from '@/system/boot/BootGate';
 import DesktopBackdrop from '@/system/desktop/DesktopBackdrop';
 import WindowField from '@/system/windowing/WindowField';
-import DockRail from '@/system/dock/DockRail';
+import DockRail from '@/system/dock/dockrail';
 import AppDrawer from '@/system/app-drawer/AppDrawer';
 import DesktopContextMenu from '@/system/desktop/DesktopContextMenu';
 import CommandPalette from '@/system/command-palette/CommandPalette';

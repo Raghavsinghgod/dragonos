@@ -43,7 +43,7 @@ src/
 │   ├── boot/BootGate.tsx     # 2s boot sequence
 │   ├── desktop/              # DesktopStage orchestrator, backdrop, context menu, 404
 │   ├── windowing/WindowField.tsx   # Window lifecycle, drag, resize, snapping
-│   ├── dock/DockRail.tsx     # Gaussian-magnifying dock + launchpad
+│   ├── dock/dockrail.tsx     # Gaussian-magnifying dock + launchpad
 │   ├── app-drawer/           # Searchable launcher grid
 │   ├── command-palette/      # Ctrl+K fuzzy search
 │   ├── drawer/               # Right-edge quick panel
