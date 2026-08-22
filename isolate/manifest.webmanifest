@@ -1,0 +1,17 @@
+{
+  "name": "dragonos",
+  "short_name": "dragonos",
+  "description": "a dragon-themed web desktop with 28 apps, floating windows, and a crimson soul.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050508",
+  "theme_color": "#050508",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
