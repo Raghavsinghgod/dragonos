@@ -1,0 +1,577 @@
+// Split-context reducer store. Components subscribe to the slice they need,
+// so a dragging window never re-renders the dock.
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useMemo } from 'react';
+import { save, load } from './persist';
+import type { ReactNode } from 'react';
+
+// ─── Shared domain types ──────────────────────────────────
+export interface WindowState {
+  id: string;
+  appId: string;
+  title: string;
+  icon: ReactNode;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  minWidth: number;
+  minHeight: number;
+  minimized: boolean;
+  maximized: boolean;
+  zIndex: number;
+  isOpen: boolean;
+  animState: 'opening' | 'open' | 'closing' | 'minimizing';
+}
+
+export interface AppMeta {
+  id: string;
+  name: string;
+  icon: ReactNode;
+  defaultWidth: number;
+  defaultHeight: number;
+  minWidth: number;
+  minHeight: number;
+  component: React.ComponentType<{ windowId: string }>;
+  pinned?: boolean;
+  dockOrder?: number;
+}
+
+export interface Toast {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'error' | 'warning' | 'achievement';
+  duration?: number;
+}
+
+export interface DesktopState {
+  username: string;
+  soundEnabled: boolean;
+  wallpaperTheme: string;
+  booted: boolean;
+  sleeping: boolean;
+  windowOrder: string[];
+  lastZIndex: number;
+}
+
+export interface TodoItem {
+  id: string;
+  text: string;
+  priority: 'LOW' | 'MED' | 'HIGH';
+  done: boolean;
+  createdAt: number;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  time?: string;
+}
+
+export interface Goal {
+  id: string;
+  emoji: string;
+  title: string;
+  milestones: { id: string; text: string; done: boolean }[];
+}
+
+export interface Habit {
+  id: string;
+  name: string;
+  completions: string[];
+}
+
+export interface KanbanColumn {
+  id: string;
+  title: string;
+  cards: { id: string; text: string; color: string }[];
+}
+
+export interface JournalEntry {
+  date: string;
+  content: string;
+}
+
+export interface Expense {
+  id: string;
+  amount: number;
+  category: string;
+  date: string;
+  note?: string;
+}
+
+export interface MoodEntry {
+  date: string;
+  mood: string;
+}
+
+export interface Bookmark {
+  id: string;
+  title: string;
+  url: string;
+  tags: string[];
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+  unlockedAt?: number;
+}
+
+// ─── State shape ──────────────────────────────────────────
+export interface OSState {
+  desktop: DesktopState;
+  windows: Record<string, WindowState>;
+  toasts: Toast[];
+  nextZ: number;
+  konamiProgress: number[];
+  windowOrder: string[];
+}
+
+type OSAction =
+  | { type: 'BOOT' }
+  | { type: 'SLEEP' }
+  | { type: 'WAKE' }
+  | { type: 'SET_USERNAME'; name: string }
+  | { type: 'TOGGLE_SOUND' }
+  | { type: 'SET_WALLPAPER'; theme: string }
+  | { type: 'OPEN_WINDOW'; windowId: string; appId: string; title: string; icon: React.ReactNode; width: number; height: number; minWidth: number; minHeight: number }
+  | { type: 'CLOSE_WINDOW'; windowId: string }
+  | { type: 'REMOVE_WINDOW'; windowId: string }
+  | { type: 'MINIMIZE_WINDOW'; windowId: string }
+  | { type: 'MAXIMIZE_WINDOW'; windowId: string }
+  | { type: 'RESTORE_WINDOW'; windowId: string }
+  | { type: 'FOCUS_WINDOW'; windowId: string }
+  | { type: 'MOVE_WINDOW'; windowId: string; x: number; y: number }
+  | { type: 'RESIZE_WINDOW'; windowId: string; width: number; height: number; x?: number; y?: number }
+  | { type: 'SHOW_DESKTOP' }
+  | { type: 'CASCADE_WINDOWS' }
+  | { type: 'ADD_TOAST'; toast: Toast }
+  | { type: 'REMOVE_TOAST'; id: string }
+  | { type: 'KONAMI_KEY'; key: number }
+  | { type: 'RESET_KONAMI' }
+  | { type: 'FACTORY_RESET' };
+
+// ─── Initial state ────────────────────────────────────────
+const defaultDesktop: DesktopState = {
+  username: 'Dragon',
+  soundEnabled: true,
+  wallpaperTheme: 'dragon',
+  booted: false,
+  sleeping: false,
+  windowOrder: [],
+  lastZIndex: 0,
+};
+
+// ─── Optimized reducer ────────────────────────────────────
+// All window mutations are isolated — changing a single window only
+// spreads the windows record once, not every consumer.
+function osReducer(state: OSState, action: OSAction): OSState {
+  switch (action.type) {
+    case 'BOOT':
+      return { ...state, desktop: { ...state.desktop, booted: true } };
+    case 'SLEEP':
+      return { ...state, desktop: { ...state.desktop, sleeping: true } };
+    case 'WAKE':
+      return { ...state, desktop: { ...state.desktop, sleeping: false } };
+    case 'SET_USERNAME':
+      return { ...state, desktop: { ...state.desktop, username: action.name } };
+    case 'TOGGLE_SOUND':
+      return { ...state, desktop: { ...state.desktop, soundEnabled: !state.desktop.soundEnabled } };
+    case 'SET_WALLPAPER':
+      return { ...state, desktop: { ...state.desktop, wallpaperTheme: action.theme } };
+    case 'OPEN_WINDOW': {
+      const existing = state.windows[action.windowId];
+      if (existing && existing.isOpen && !existing.minimized && existing.animState !== 'closing') {
+        return osReducer(state, { type: 'FOCUS_WINDOW', windowId: action.windowId });
+      }
+      if (existing && existing.minimized) {
+        return osReducer(state, { type: 'RESTORE_WINDOW', windowId: action.windowId });
+      }
+      const newZ = state.nextZ + 1;
+      const w: WindowState = {
+        id: action.windowId,
+        appId: action.appId,
+        title: action.title,
+        icon: action.icon,
+        x: 100 + (Object.keys(state.windows).length % 8) * 30,
+        y: 60 + (Object.keys(state.windows).length % 8) * 30,
+        width: action.width,
+        height: action.height,
+        minWidth: action.minWidth,
+        minHeight: action.minHeight,
+        minimized: false,
+        maximized: false,
+        zIndex: newZ,
+        isOpen: true,
+        animState: 'opening',
+      };
+      return {
+        ...state,
+        windows: { ...state.windows, [action.windowId]: w },
+        nextZ: newZ,
+        windowOrder: [...state.windowOrder.filter(id => id !== action.windowId), action.windowId],
+      };
+    }
+    case 'CLOSE_WINDOW': {
+      const win = state.windows[action.windowId];
+      if (!win) return state;
+      return {
+        ...state,
+        windows: {
+          ...state.windows,
+          [action.windowId]: { ...win, animState: 'closing' },
+        },
+      };
+    }
+    case 'REMOVE_WINDOW': {
+      const win = state.windows[action.windowId];
+      if (!win) return state;
+      const windows = { ...state.windows };
+      delete windows[action.windowId];
+      return {
+        ...state,
+        windows,
+        windowOrder: state.windowOrder.filter(id => id !== action.windowId),
+      };
+    }
+    case 'MINIMIZE_WINDOW': {
+      const win = state.windows[action.windowId];
+      if (!win) return state;
+      return {
+        ...state,
+        windows: {
+          ...state.windows,
+          [action.windowId]: { ...win, minimized: true, animState: 'minimizing' },
+        },
+      };
+    }
+    case 'MAXIMIZE_WINDOW': {
+      const win = state.windows[action.windowId];
+      if (!win) return state;
+      return {
+        ...state,
+        windows: {
+          ...state.windows,
+          [action.windowId]: {
+            ...win,
+            maximized: !win.maximized,
+            x: win.maximized ? 100 : 0,
+            y: win.maximized ? 60 : 0,
+            width: win.maximized ? win.width : window.innerWidth,
+            height: win.maximized ? win.height : window.innerHeight - 80,
+          },
+        },
+      };
+    }
+    case 'RESTORE_WINDOW': {
+      const win = state.windows[action.windowId];
+      if (!win) return state;
+      const newZ = state.nextZ + 1;
+      return {
+        ...state,
+        windows: {
+          ...state.windows,
+          [action.windowId]: { ...win, minimized: false, animState: 'opening', zIndex: newZ },
+        },
+        nextZ: newZ,
+      };
+    }
+    case 'FOCUS_WINDOW': {
+      const win = state.windows[action.windowId];
+      if (!win) return state;
+      // Skip if already focused (highest z)
+      if (win.zIndex === state.nextZ) return state;
+      const newZ = state.nextZ + 1;
+      return {
+        ...state,
+        windows: {
+          ...state.windows,
+          [action.windowId]: { ...win, zIndex: newZ },
+        },
+        nextZ: newZ,
+      };
+    }
+    case 'MOVE_WINDOW': {
+      const win = state.windows[action.windowId];
+      if (!win) return state;
+      return {
+        ...state,
+        windows: {
+          ...state.windows,
+          [action.windowId]: { ...win, x: action.x, y: action.y, maximized: false },
+        },
+      };
+    }
+    case 'RESIZE_WINDOW': {
+      const win = state.windows[action.windowId];
+      if (!win) return state;
+      return {
+        ...state,
+        windows: {
+          ...state.windows,
+          [action.windowId]: {
+            ...win,
+            width: Math.max(win.minWidth, action.width),
+            height: Math.max(win.minHeight, action.height),
+            ...(action.x !== undefined ? { x: action.x } : {}),
+            ...(action.y !== undefined ? { y: action.y } : {}),
+            maximized: false,
+          },
+        },
+      };
+    }
+    case 'SHOW_DESKTOP': {
+      const allMinimized = Object.values(state.windows).every(w => w.minimized);
+      const windows = { ...state.windows };
+      for (const id of Object.keys(windows)) {
+        windows[id] = { ...windows[id], minimized: !allMinimized };
+      }
+      return { ...state, windows };
+    }
+    case 'CASCADE_WINDOWS': {
+      const openWins = Object.values(state.windows).filter(w => w.isOpen && !w.minimized);
+      if (openWins.length === 0) return state;
+      const windows = { ...state.windows };
+      openWins.forEach((w, i) => {
+        windows[w.id] = { ...w, x: 80 + i * 30, y: 60 + i * 30 };
+      });
+      return { ...state, windows };
+    }
+    case 'ADD_TOAST':
+      return { ...state, toasts: [...state.toasts, action.toast] };
+    case 'REMOVE_TOAST':
+      return { ...state, toasts: state.toasts.filter(t => t.id !== action.id) };
+    case 'KONAMI_KEY': {
+      const sequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+      const progress = [...state.konamiProgress, action.key];
+      if (progress.length > 10) progress.shift();
+      const matches = progress.length === sequence.length && progress.every((v, i) => v === sequence[i]);
+      return { ...state, konamiProgress: matches ? [] : progress };
+    }
+    case 'RESET_KONAMI':
+      return { ...state, konamiProgress: [] };
+    case 'FACTORY_RESET':
+      return {
+        desktop: { ...defaultDesktop, booted: false },
+        windows: {},
+        toasts: [],
+        nextZ: 0,
+        konamiProgress: [],
+        windowOrder: [],
+      };
+    default:
+      return state;
+  }
+}
+
+const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+
+// ─── Split contexts for fine-grained re-renders ───────────
+// DesktopContext: only booted, sleeping, username, sound, wallpaper
+const DesktopStateContext = createContext<DesktopState>(defaultDesktop);
+// WindowContext: only windows + windowOrder
+const WindowContext = createContext<Record<string, WindowState>>({});
+const WindowOrderContext = createContext<string[]>([]);
+// ToastContext: only toasts
+const ToastContext = createContext<Toast[]>([]);
+// Dispatch + actions context (stable reference)
+interface OSActionsContextValue {
+  dispatch: React.Dispatch<OSAction>;
+  openApp: (appId: string) => void;
+  closeApp: (windowId: string) => void;
+  addToast: (title: string, message: string, type?: Toast['type']) => void;
+}
+const OSActionsContext = createContext<OSActionsContextValue | null>(null);
+
+// ─── Hooks for consuming split contexts ───────────────────
+export function useDesktop(): DesktopState {
+  return useContext(DesktopStateContext);
+}
+
+export function useWindows(): Record<string, WindowState> {
+  return useContext(WindowContext);
+}
+
+export function useWindowOrder(): string[] {
+  return useContext(WindowOrderContext);
+}
+
+export function useToasts(): Toast[] {
+  return useContext(ToastContext);
+}
+
+// Combined hook — returns both state + actions for backward compatibility.
+// For performance-sensitive components, prefer useDesktop/useWindows/useToasts + useOS().
+export function useOS(): OSContextValue {
+  const ctx = useContext(OSActionsContext);
+  if (!ctx) throw new Error('useOS must be used within OSProvider');
+  const state = useFullState();
+  return useMemo(() => ({ ...ctx, state }), [ctx, state]);
+}
+
+// Full state access (for rare cases)
+export function useFullOS() {
+  const state = useFullState();
+  const actions = useOS();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
+}
+
+// Full combined state (used sparingly)
+const FullStateContext = createContext<OSState | null>(null);
+function useFullState(): OSState {
+  const ctx = useContext(FullStateContext);
+  if (!ctx) throw new Error('useFullState must be used within OSProvider');
+  return ctx;
+}
+
+// Backward-compatible combined interface
+interface OSContextValue {
+  state: OSState;
+  dispatch: React.Dispatch<OSAction>;
+  openApp: (appId: string) => void;
+  closeApp: (windowId: string) => void;
+  addToast: (title: string, message: string, type?: Toast['type']) => void;
+}
+
+// ─── App registry (kept outside context for zero-render reads) ──
+let appRegistryRef: Record<string, { name: string; icon: React.ReactNode; defaultWidth: number; defaultHeight: number; minWidth: number; minHeight: number }> = {};
+
+export function setAppRegistry(reg: typeof appRegistryRef) {
+  appRegistryRef = reg;
+}
+
+// ─── Provider ─────────────────────────────────────────────
+export function OSProvider({ children }: { children: React.ReactNode }) {
+  const savedDesktop = load<DesktopState>('desktop', defaultDesktop);
+  const [state, dispatch] = useReducer(osReducer, {
+    desktop: { ...defaultDesktop, ...savedDesktop, booted: false, sleeping: false },
+    windows: {},
+    toasts: [],
+    nextZ: 10,
+    konamiProgress: [],
+    windowOrder: [],
+  });
+
+  // Save desktop state (debounced via effect)
+  useEffect(() => {
+    if (state.desktop.booted) {
+      save('desktop', {
+        username: state.desktop.username,
+        soundEnabled: state.desktop.soundEnabled,
+        wallpaperTheme: state.desktop.wallpaperTheme,
+      });
+    }
+  }, [state.desktop.username, state.desktop.soundEnabled, state.desktop.wallpaperTheme, state.desktop.booted]);
+
+  // Keyboard shortcuts — single listener, all shortcuts in one handler
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        document.dispatchEvent(new CustomEvent('dragonos-escape'));
+      }
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        document.dispatchEvent(new CustomEvent('dragonos-command-palette'));
+      }
+      if (e.altKey && e.key === 'd') {
+        e.preventDefault();
+        dispatch({ type: 'SHOW_DESKTOP' });
+      }
+      if (e.altKey && e.key >= '1' && e.key <= '9') {
+        e.preventDefault();
+        document.dispatchEvent(new CustomEvent('dragonos-open-app-by-index', { detail: parseInt(e.key) }));
+      }
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        document.dispatchEvent(new CustomEvent('dragonos-toggle-drawer'));
+      }
+      // Konami code — only dispatch if relevant key
+      if ([38, 40, 37, 39, 66, 65].includes(e.keyCode)) {
+        dispatch({ type: 'KONAMI_KEY', key: e.keyCode });
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [dispatch]);
+
+  // Konami check
+  useEffect(() => {
+    if (state.konamiProgress.length === 10 && state.konamiProgress.every((v, i) => v === konamiSequence[i])) {
+      document.dispatchEvent(new CustomEvent('dragonos-konami'));
+      dispatch({ type: 'RESET_KONAMI' });
+    }
+  }, [state.konamiProgress, dispatch]);
+
+  // Stable action callbacks
+  const openApp = useCallback((appId: string) => {
+    const reg = appRegistryRef[appId];
+    if (!reg) return;
+    const windowId = `win-${appId}`;
+    dispatch({
+      type: 'OPEN_WINDOW',
+      windowId,
+      appId,
+      title: reg.name,
+      icon: reg.icon,
+      width: reg.defaultWidth,
+      height: reg.defaultHeight,
+      minWidth: reg.minWidth,
+      minHeight: reg.minHeight,
+    });
+  }, [dispatch]);
+
+  const closeApp = useCallback((windowId: string) => {
+    // Play the closing animation, then drop the window from state entirely
+    dispatch({ type: 'CLOSE_WINDOW', windowId });
+    setTimeout(() => dispatch({ type: 'REMOVE_WINDOW', windowId }), 320);
+  }, [dispatch]);
+
+  const addToast = useCallback((title: string, message: string, type: Toast['type'] = 'info') => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    dispatch({ type: 'ADD_TOAST', toast: { id, title, message, type } });
+    setTimeout(() => dispatch({ type: 'REMOVE_TOAST', id }), 3000);
+  }, [dispatch]);
+
+  // Memoize actions value — dispatch is stable from useReducer
+  const actionsValue = useMemo<OSActionsContextValue>(
+    () => ({ dispatch, openApp, closeApp, addToast }),
+    [dispatch, openApp, closeApp, addToast]
+  );
+
+  // Memoize split context values to prevent unnecessary re-renders
+  const desktopValue = useMemo(() => state.desktop, [state.desktop]);
+  const windowsValue = useMemo(() => state.windows, [state.windows]);
+  const windowOrderValue = useMemo(() => state.windowOrder, [state.windowOrder]);
+  const toastsValue = useMemo(() => state.toasts, [state.toasts]);
+
+  return (
+    <OSActionsContext.Provider value={actionsValue}>
+      <DesktopStateContext.Provider value={desktopValue}>
+        <WindowContext.Provider value={windowsValue}>
+          <WindowOrderContext.Provider value={windowOrderValue}>
+            <ToastContext.Provider value={toastsValue}>
+              <FullStateContext.Provider value={state}>
+                {children}
+              </FullStateContext.Provider>
+            </ToastContext.Provider>
+          </WindowOrderContext.Provider>
+        </WindowContext.Provider>
+      </DesktopStateContext.Provider>
+    </OSActionsContext.Provider>
+  );
+}
+
+export default OSProvider;
