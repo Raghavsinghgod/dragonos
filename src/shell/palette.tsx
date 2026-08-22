@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useOS } from '@/core/store';
 import { sounds } from '@/core/audio';
 import { allApps } from './launcher';
-import { Search } from '@/ui/icons/icon-map';
+import { Search } from '@/ui/icons';
 
 export default function CommandPalette() {
   const openApp = useOS().openApp;
